@@ -101,16 +101,19 @@ The replicated method addeds subclass whose names match the replication connecti
 Based on the above example database.yml User class would now have User::Slave1 and User::Slave2. 
 
 You can treat your subclass like normal activerecord objects.
+    
     User::Slave1.first => returns results from slave_1_use_data_development 
     User::Slave2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_use_data_development
 
 For a more elegant implementation, connection_manager also add class methods to you main model following the
 same naming standard as the subclass creation.
+    
     User.slave_1.first  => returns results from slave_1_use_data_development 
     User.slave_2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_2_use_data_development 
 
 Finally connection_manager creates an addional class method that shifts through your 
 available slave connections each time it is called using a different connection on each action.
+    
     User.slave.first  => returns results from slave_1_use_data_development 
     User.slave.last =>  => returns results from slave_2_use_data_development 
     User.slave.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_1_use_data_development 
