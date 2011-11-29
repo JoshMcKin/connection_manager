@@ -6,7 +6,7 @@ Replication and Multi-Database ActiveRecord add on.
 * Use connection classes instead of establish_connection on every model to ensure connection pooling
 * Focus connection management at the model level
 * Use the default database.yml as single point for all database configurations (no extra .yml files)
-* When slave objects are used in html helpers like link_to and form_for the created urls that match the master
+* When slave objects are used in html helpers like link_to and form_for the created urls match those created using a master object
 
 ## Installation
 
