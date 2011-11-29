@@ -3,8 +3,8 @@ Replication and Multi-Database ActiveRecord add on.
 
 ## Goals
 * Take the lib I've been using finally make something out of it ;)
-* Use connection classes instead of establish_connection on every model to ensure connection pooling
-* Focus connection management at the model level
+* Use connection classes, instead of establish_connection on every model, to ensure connection pooling
+* Use non-adapter specific code.
 * Use the default database.yml as single point for all database configurations (no extra .yml files)
 * When slave objects are used in html helpers like link_to and form_for the created urls match those created using a master object
 
@@ -17,7 +17,7 @@ connection_manager is available through [Rubygems](https://rubygems.org/gems/con
 ## Rails 3 setup (Rails 2 untested at this time please let me know if it works for you )
 
 connection_manager assumes the primary connection for the model is the master. For standard
-models using the default connection this means the main rails database connection is the master.
+models using the default connection this means the main Rails database connection is the master.
 
 Example database.yml
 
@@ -37,7 +37,7 @@ Example database.yml
 
     slave_1_test_app_development:
       <<: *common
-      database: portal_production
+      database: test_app
   
     slave_2_test_app_development:
       <<: *common
@@ -80,7 +80,7 @@ If your using the example database.yml your array would look like this:
 
 
 To use one of your ConnectionManager::Connections for your models default/master database
-setup you model like the following
+setup your model like the following
     
     class User < ConnectionManager::Connections::UserDataConnection
         # model code ...
@@ -88,7 +88,7 @@ setup you model like the following
 
 ### Replication
 
-simply add 'replicated' to you model beneath any defined associations
+Simply add 'replicated' to your model beneath any defined associations
     
     class User < ConnectionManager::Connections::UserDataConnection
         has_one :job
@@ -102,22 +102,22 @@ Based on the above example database.yml User class would now have User::Slave1 a
 
 You can treat your subclass like normal activerecord objects.
     
-    User::Slave1.first => returns results from slave_1_use_data_development 
-    User::Slave2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_use_data_development
+    User::Slave1.first => returns results from slave_1_user_data_development 
+    User::Slave2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_user_data_development
 
-For a more elegant implementation, connection_manager also add class methods to you main model following the
+For a more elegant implementation, connection_manager also add class methods to your main model following the
 same naming standard as the subclass creation.
     
-    User.slave_1.first  => returns results from slave_1_use_data_development 
-    User.slave_2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_2_use_data_development 
+    User.slave_1.first  => returns results from slave_1_user_data_development 
+    User.slave_2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_2_user_data_development 
 
 Finally connection_manager creates an addional class method that shifts through your 
 available slave connections each time it is called using a different connection on each action.
     
     User.slave.first  => returns results from slave_1_use_data_development 
     User.slave.last =>  => returns results from slave_2_use_data_development 
-    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_1_use_data_development 
-    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_use_data_development 
+    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_1_user_data_development 
+    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_user_data_development 
 
 ## TODO's
 * add more to readme
