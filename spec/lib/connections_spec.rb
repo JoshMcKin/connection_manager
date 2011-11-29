@@ -1,6 +1,10 @@
 require 'spec_helper'
 describe ConnectionManager::Connections do
-
+  before(:all) do
+    ConnectionManager::Connections.intialize(:env => 'test')
+    ActiveRecord::Base.establish_connection(DBCONFIG["test"])
+    puts ActiveRecord::Base.configurations
+  end
   context '#all' do
     it "should return the database.yml entries for the current rails environment" do
       ConnectionManager::Connections.all.should eql(["TestAppConnection", "Slave1TestAppConnection"])
