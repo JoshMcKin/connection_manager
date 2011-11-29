@@ -1,20 +1,130 @@
-# activerecord-connection_manager
+# connection_manager
 Replication and Multi-Database ActiveRecord add on.
 
+## Goals
+* Take the lib I've been using finally make something out of it ;)
+* Use connection classes instead of establish_connection on every model to ensure connection pooling
+* Focus connection management at the model level
+* Use the default database.yml as single point for all database configurations (no extra .yml files)
+* When slave objects are used in html helpers like link_to and form_for the created urls that match the master
 
 ## Installation
 
-activerecord-connection_manager is available through [Rubygems](https://rubygems.org/gems/activerecord-connection_manager) and can be installed via:
+connection_manager is available through [Rubygems](https://rubygems.org/gems/connection_manager) and can be installed via:
 
-    $ gem install activerecord-connection_manager
+    $ gem install connection_manager
 
-## Rails 3 setup (no rails 2 sorry)
+## Rails 3 setup (Rails 2 untested at this time please let me know if it works for you )
+
+connection_manager assumes the primary connection for the model is the master. For standard
+models using the default connection this means the main rails database connection is the master.
+
+Example database.yml
+
+    common: &common
+    adapter: mysql2
+    username: root
+    password: *****
+    database_timezone: local
+    pool: 100
+    connect_timeout: 20
+    timeout: 900
+    socket: /tmp/mysql.sock
+  
+    development:
+      <<: *common
+      database: test_app
+
+    slave_1_test_app_development:
+      <<: *common
+      database: portal_production
+  
+    slave_2_test_app_development:
+      <<: *common
+      database: test_app
+
+    user_data_development
+      <<: *common
+      database: user_data
+
+    slave_1_user_data_development
+      <<: *common
+      database: user_data
+
+    slave_2_user_data_development
+      <<: *common
+      database: user_data
+
+In the above database.yml the Master databases are listed as "development" and "user_data_development".
+As you can see the replication database name follow a strict standard for the connection names. 
+For slave_1_test_app_development, "slave" is the name of the replication, "1" is the count, "test_app"
+is the databases name and finally the "development" is the environment. (Of course in your database.yml
+each slave would have a different connection to is replication :)
 
 
-## References
+### Setup Multiple Databases
+
+At startup connection_manager builds connection classes  to ConnectionManager::Connections
+using the connections described in your database.yml based on the current rails environment.
+
+You can use a different master by having the model inherit from one of your ConnectionManager::Connections.
+
+To view your ConnectionManager::Connections, at the Rails console type:
+
+    ruby-1.9.2-p290 :001 > ConnectionManager::Connections.all => ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection"]
+
+If your using the example database.yml your array would look like this:
+    ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection", 
+    "UserDataConnection", "Slave1UserDataConnection", "Slave2UserDataConnection"]
 
 
-## Contributing to em_aws
+
+To use one of your ConnectionManager::Connections for your models default/master database
+setup you model like the following
+    
+    class User < ConnectionManager::Connections::UserDataConnection
+        # model code ...
+    end
+
+### Replication
+
+simply add 'replicated' to you model beneath any defined associations
+    
+    class User < ConnectionManager::Connections::UserDataConnection
+        has_one :job
+        has_many :teams
+        replicated # implement replication        
+        # model code ...
+    end
+
+The replicated method addeds subclass whose names match the replication connection name and count.
+Based on the above example database.yml User class would now have User::Slave1 and User::Slave2. 
+
+You can treat your subclass like normal activerecord objects.
+    User::Slave1.first => returns results from slave_1_use_data_development 
+    User::Slave2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_use_data_development
+
+For a more elegant implementation, connection_manager also add class methods to you main model following the
+same naming standard as the subclass creation.
+    User.slave_1.first  => returns results from slave_1_use_data_development 
+    User.slave_2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_2_use_data_development 
+
+Finally connection_manager creates an addional class method that shifts through your 
+available slave connections each time it is called using a different connection on each action.
+    User.slave.first  => returns results from slave_1_use_data_development 
+    User.slave.last =>  => returns results from slave_2_use_data_development 
+    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_1_use_data_development 
+    User.slave.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_use_data_development 
+
+## TODO's
+* add more to readme
+* more specs
+* sharding
+
+## Other activerecord Connection gems
+* [Octopus](https://github.com/tchandy/octopus)
+
+## Contributing to connection_manager
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
