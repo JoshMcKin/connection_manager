@@ -63,12 +63,17 @@ module ConnectionManager
    
     
       def add_replication_connection(name_from_yml,new_connection)    
-        rep_name = name_from_yml.split("_")[0]
-        db_name = database_name_from_yml(name_from_yml)
-        if db_name.gsub!(/(^db\/)|(\.sqlite3$)/,'')  
-          db_name.gsub!(Regexp.new("(\\_#{env}$)"),'')
+        rep_name = "#{name_from_yml}".gsub(Regexp.new("(#{env}$)"),'')
+        if rep_name.blank?
+          db_name = database_name_from_yml(name_from_yml)
+          if db_name.gsub!(/(\.sqlite3$)/,'')  
+            db_name = db_name.split("/").last
+            db_name.gsub!(Regexp.new("(\\_#{env}$)"),'')
+          end  
+          rep_name = db_name
         end
-        rep_name << "_#{db_name}"
+        rep_name.gsub!(/(\_)+(\d+)/,'')
+        rep_name.gsub!(/\_$/,'')
         rep_name = rep_name.to_sym
         replication_connections[rep_name] ||= []
         replication_connections[rep_name] << new_connection
@@ -91,7 +96,7 @@ module ConnectionManager
           add_replication_connection(connection,new_connection)
           build_connection_class(new_connection,connection)       
         end
-       all
+        all
       end 
     
       # Addes a conneciton subclass to AvailableConnections using the supplied
