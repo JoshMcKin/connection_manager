@@ -3,14 +3,15 @@ describe ConnectionManager::Connections do
 
   context '#all' do
     it "should return the database.yml entries for the current rails environment" do
-      ConnectionManager::Connections.all.should eql(["TestAppConnection", "Slave1TestAppConnection"])
+      ConnectionManager::Connections.all.should eql(["CmTestAppConnection", 
+          "Slave1CmTestAppConnection", "Slave2CmTestAppConnection"])
     end
   end
   
   context '#replication_connections' do
     it "should return a hash where the keys are the generic undescored names for all connections" do
       ConnectionManager::Connections.replication_connections.keys.
-        should eql([:test_app, :slave_test_app])
+        should eql([:cm_test_app, :slave_cm_test_app])
     end
     it "should return a hash where the values are an array of connection class names as strings" do
       first_value = ConnectionManager::Connections.replication_connections.values.first
@@ -30,7 +31,7 @@ describe ConnectionManager::Connections do
       ConnectionManager::Connections.connection_class_name("db/my_database_test.sqlite3").should eql("MyDatabaseConnection")
     end
     it "should use the database name from the database.yml if supplied string is only is only the Rails.env" do
-      ConnectionManager::Connections.stubs(:database_name_from_yml).returns("MyTest")
+      ConnectionManager::Connections.stubs(:database_name_from_yml).returns("my_test_test")
       ConnectionManager::Connections.connection_class_name("test").should eql("MyTestConnection")
     end
   end
