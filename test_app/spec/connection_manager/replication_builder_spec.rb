@@ -4,7 +4,7 @@ describe ConnectionManager::ReplicationBuilder do
   
   context '#database_name' do
     it "should return the name of the database the model is using" do
-      Fruit.database_name.should eql('test_app')
+      Fruit.database_name.should eql('cm_test_app_test')
     end
   end
 

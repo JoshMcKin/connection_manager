@@ -1,4 +1,4 @@
 class Region < ActiveRecord::Base
-  has_many :fruit
+  has_one :fruit
   replicated
 end
