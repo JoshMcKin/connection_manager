@@ -2,9 +2,10 @@ module ConnectionManager
   module ReplicationBuilder
     
     def database_name(db_name=nil)
+      connection.current_database
       db_name = "#{connection.instance_variable_get(:@config)[:database].to_s}" if db_name.blank?
-      db_name.gsub!(/(\.sqlite3$)/,'')
-      db_name = db_name.split("/").last
+#      db_name.gsub!(/(\.sqlite3$)/,'')
+#      db_name = db_name.split("/").last
       db_name
     end
     
