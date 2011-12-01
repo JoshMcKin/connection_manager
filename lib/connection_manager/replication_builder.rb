@@ -1,12 +1,8 @@
 module ConnectionManager
   module ReplicationBuilder
     
-    def database_name(db_name=nil)
-      connection.current_database
-      db_name = "#{connection.instance_variable_get(:@config)[:database].to_s}" if db_name.blank?
-#      db_name.gsub!(/(\.sqlite3$)/,'')
-#      db_name = db_name.split("/").last
-      db_name
+    def database_name
+      "#{connection.instance_variable_get(:@config)[:database].to_s}"
     end
     
     def replication_association_options(method,association,class_name,options={})
@@ -40,12 +36,14 @@ module ConnectionManager
     
     def replication_connection_classes(options)
       if options[:using] && options[:using].is_a?(Array)
-        connection_classes = options[:using].collection{|c| Connections.connection_class_name(c)}
+        connection_classes = options[:using].collect{|c| Connections.connection_class_name(c)}
       else  
-        connection_classes = Connections.connections_for_replication("#{options[:name].to_s}_#{database_name}") 
+        rep_name = "#{options[:name].to_s}_#{Connections.clean_sqlite_db_name(database_name)}"
+        connection_classes = Connections.connections_for_replication(rep_name) 
       end
       connection_classes
     end
+
     
     # Adds subclass with the class name of the type provided in the options, which 
     # defaults to 'slave' if blank, that uses the connection from a connection class.
@@ -81,8 +79,8 @@ module ConnectionManager
     # overrides the rails "readonly?" method to ensure saves are prevented. 
     # Replication class can be called directly for operaitons.
     # Usage: 
-    # => User::Slave1.where(:id => 1).first => returns results from slave_1 database
-    # => User::Slave2.where(:id => 2).first => returns results from slave_1 database
+    #   User::Slave1.where(:id => 1).first => returns results from slave_1 database
+    #   User::Slave2.where(:id => 2).first => returns results from slave_1 database
     def build_replication_class(class_name,connection_name,options)
       class_eval <<-STR, __FILE__, __LINE__
       class #{class_name} < #{self.name}
@@ -100,8 +98,8 @@ module ConnectionManager
     
     # Adds as class method to call a specific replication conneciton.
     # Usage:
-    # => User.slave_1.where(:id => 2).first => returns results from slave_1 database
-    # => User.slave_2.where(:id => 2).first => returns results from slave_1 database
+    #   User.slave_1.where(:id => 2).first => returns results from slave_1 database
+    #   User.slave_2.where(:id => 2).first => returns results from slave_2 database
     def build_single_replication_method(method_name,class_name)
       class_eval <<-STR, __FILE__, __LINE__
         class << self
@@ -115,7 +113,7 @@ module ConnectionManager
     # add a class method that shifts through available connections methods
     # on each call.
     # Usage:
-    # => User.slave.where(:id => 2).first => can return results from slave_1 or slave_2 
+    #   User.slave.where(:id => 2).first => can return results from slave_1 or slave_2 
     def build_full_replication_method(options,connection_methods)
       class_eval <<-STR, __FILE__, __LINE__
       @connection_methods = #{connection_methods}
