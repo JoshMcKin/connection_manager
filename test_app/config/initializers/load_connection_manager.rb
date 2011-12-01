@@ -1,6 +1,0 @@
-path = "../../../../lib/connection_manager"
-require "#{File.expand_path(path, __FILE__)}"
-require "#{File.expand_path("#{path}/connections.rb", __FILE__)}"
-require "#{File.expand_path("#{path}/associations.rb", __FILE__)}"
-require "#{File.expand_path("#{path}/replication_builder.rb", __FILE__)}"
-require "#{File.expand_path("#{path}/version.rb", __FILE__)}"

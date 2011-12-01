@@ -41,7 +41,6 @@ module ConnectionManager
       # Returns the database value given a connection key from the database.yml
       def database_name_from_yml(name_from_yml)
         ActiveRecord::Base.configurations[name_from_yml]['database']
-
       end
     
       def clean_sqlite_db_name(name)
