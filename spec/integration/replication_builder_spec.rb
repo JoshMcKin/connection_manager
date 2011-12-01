@@ -93,5 +93,19 @@ describe ConnectionManager::ReplicationBuilder do
      end
    end
   end
+  context "model_name for slave" do
+    it "should return the supers model_name" do
+      Fruit.slave.model_name.should eql(Fruit.model_name)
+    end
+    
+    it "should not interfear with inheritance" do
+      class MyFruit < Fruit
+        
+      end
+ 
+      Fruit.model_name.should_not eql(MyFruit.model_name)
+      MyFruit.model_name.should eql("MyFruit")
+    end
+  end
 end
 
