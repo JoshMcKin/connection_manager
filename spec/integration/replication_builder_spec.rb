@@ -99,12 +99,15 @@ describe ConnectionManager::ReplicationBuilder do
     end
     
     it "should not interfear with inheritance" do
+      Factory.create(:fruit)
       class MyFruit < Fruit
-        
+        replicated
       end
  
       Fruit.model_name.should_not eql(MyFruit.model_name)
       MyFruit.model_name.should eql("MyFruit")
+      MyFruit.slave_1.model_name.should eql("MyFruit")
+      MyFruit.slave_1.first.class.should eql(MyFruit::Slave1)
     end
   end
 end
