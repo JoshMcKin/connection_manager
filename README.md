@@ -1,4 +1,4 @@
-# connection_manager
+# ConnectionManager
 Replication and Multi-Database ActiveRecord add on.
 
 ## Goals
@@ -10,13 +10,13 @@ Replication and Multi-Database ActiveRecord add on.
 
 ## Installation
 
-connection_manager is available through [Rubygems](https://rubygems.org/gems/connection_manager) and can be installed via:
+ConnectionManager is available through [Rubygems](https://rubygems.org/gems/connection_manager) and can be installed via:
 
     $ gem install connection_manager
 
 ## Rails 3 setup (Rails 2 untested at this time please let me know if it works for you )
 
-connection_manager assumes the primary connection for the model is the master. For standard
+ConnectionManager assumes the primary connection for the model is the master. For standard
 models using the default connection this means the main Rails database connection is the master.
 
 Example database.yml
@@ -62,21 +62,20 @@ is the databases name and finally the "development" is the environment. (Of cour
 each slave would have a different connection to is replication :)
 
 
-### Setup Multiple Databases
+## Multiple Databases
 
-At startup connection_manager builds connection classes  to ConnectionManager::Connections
+At startup ConnectionManager builds connection classes  to ConnectionManager::Connections
 using the connections described in your database.yml based on the current rails environment.
 
 You can use a different master by having the model inherit from one of your ConnectionManager::Connections.
 
 To view your ConnectionManager::Connections, at the Rails console type:
 
-    ruby-1.9.2-p290 :001 > ConnectionManager::Connections.all => ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection"]
+   ConnectionManager::Connections.all => ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection"]
 
 If your using the example database.yml your array would look like this:
     ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection", 
     "UserDataConnection", "Slave1UserDataConnection", "Slave2UserDataConnection"]
-
 
 
 To use one of your ConnectionManager::Connections for your models default/master database
@@ -86,7 +85,7 @@ setup your model like the following
         # model code ...
     end
 
-### Replication
+## Replication
 
 Simply add 'replicated' to your model beneath any defined associations
     
@@ -105,13 +104,13 @@ You can treat your subclass like normal activerecord objects.
     User::Slave1.first => returns results from slave_1_user_data_development 
     User::Slave2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_user_data_development
 
-For a more elegant implementation, connection_manager also add class methods to your main model following the
+For a more elegant implementation, ConnectionManager also add class methods to your main model following the
 same naming standard as the subclass creation.
     
     User.slave_1.first  => returns results from slave_1_user_data_development 
     User.slave_2.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_2_user_data_development 
 
-Finally connection_manager creates an addional class method that shifts through your 
+Finally, ConnectionManager creates an addional class method that shifts through your 
 available slave connections each time it is called using a different connection on each action.
     
     User.slave.first  => returns results from slave_1_use_data_development 
@@ -120,14 +119,12 @@ available slave connections each time it is called using a different connection 
     User.slave.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_user_data_development 
 
 ## TODO's
-* add more to readme
-* more specs
 * sharding
 
 ## Other activerecord Connection gems
 * [Octopus](https://github.com/tchandy/octopus)
 
-## Contributing to connection_manager
+## Contributing to ConnectionManager
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
