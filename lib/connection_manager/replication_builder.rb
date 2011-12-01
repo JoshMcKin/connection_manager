@@ -83,12 +83,12 @@ module ConnectionManager
     #   User::Slave2.where(:id => 2).first => returns results from slave_1 database
     def build_replication_class(class_name,connection_name,options)
       class_eval <<-STR, __FILE__, __LINE__
-      class #{class_name} < #{self.name}
+      class #{class_name} < self
         #{build_replication_associations(class_name)}
         class << self
           delegate :connection, :to => Connections::#{connection_name}
           def model_name
-            @_model_name ||= ActiveModel::Name.new(#{model_name})
+            "#{model_name}"
           end
         end
         #{'def readonly?; true; end;' if (options[:name] == "readonly" || options[:readonly])}       
