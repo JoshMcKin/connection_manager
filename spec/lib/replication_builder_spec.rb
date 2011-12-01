@@ -4,7 +4,7 @@ describe ConnectionManager::ReplicationBuilder do
   
   context '#database_name' do
     it "should return the name of the database the model is using" do
-      Fruit.database_name.should eql('cm_test_app_test')
+      Fruit.database_name.should eql('spec/cm_test.sqlite3')
     end
   end
 
@@ -28,6 +28,22 @@ describe ConnectionManager::ReplicationBuilder do
       options[:foreign_key].should eql('fruit_id')
     end
     end
+  end
+  
+  context '#replication_connection_classes' do
+    it "should return the :using array with the array elements classified and append with Connection" do
+     Fruit.replication_connection_classes({:using => ['slave_1_test_db','slave_2_test_db']}).
+        should eql(["Slave1TestDbConnection", "Slave2TestDbConnection"])
+    end
+    
+  end
+  
+  context '#replicated' do
+    it "should raise an exception if no replication_connection_classes are found" do
+      Fruit.stubs(:replication_connection_classes).returns([])
+      lambda { Fruit.replicated }.should raise_error
+    end
+    
   end
 end
 

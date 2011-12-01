@@ -1,29 +1,35 @@
 require 'spec_helper'
 describe ConnectionManager::Connections do
+  # For all tests set the env to "test"
   before(:all) do
-    ConnectionManager::Connections.intialize(:env => 'test')
-    ActiveRecord::Base.establish_connection(DBCONFIG["test"])
-    puts ActiveRecord::Base.configurations
+    ConnectionManager::Connections.env = "test"
   end
-  context '#all' do
-    it "should return the database.yml entries for the current rails environment" do
-      ConnectionManager::Connections.all.should eql(["TestAppConnection", "Slave1TestAppConnection"])
+  context '#clean_sqlite_db_name' do
+    it "should remove the directory .sqlite3, Rails.env from the string" do
+      ConnectionManager::Connections.clean_sqlite_db_name("db/my_database_test.sqlite3").should eql("my_database")
     end
   end
   
-  context '#replication_connections' do
-    it "should return a hash where the keys are the generic undescored names for all connections" do
-      ConnectionManager::Connections.replication_connections.keys.
-        should eql([:test_app, :slave_test_app])
+  context '#clean_bd_name' do
+    context "when name is not just the Rails.env" do
+      it "should remove the Rails.env from the string" do
+        ConnectionManager::Connections.clean_bd_name("my_database_test").should eql("my_database")
+      end
     end
-    it "should return a hash where the values are an array of connection class names as strings" do
-      first_value = ConnectionManager::Connections.replication_connections.values.first
-      first_value.class.should eql(Array)
-      defined?((ConnectionManager::Connections.class_eval(first_value[0]))).should be_true
+    context "when the name is only the Rails.env" do
+      it "should use the name of the database and remove the Rails.env" do
+        ConnectionManager::Connections.stubs(:database_name_from_yml).returns("my_database_test")
+        ConnectionManager::Connections.clean_bd_name("test").should eql("my_database")
+      end
+      it "should account for sqlite3 database name" do
+        ConnectionManager::Connections.stubs(:database_name_from_yml).returns("db/my_database_test.sqlite3")
+        ConnectionManager::Connections.clean_bd_name("test").should eql("my_database")
+      end
     end
   end
   
   context '#connection_class_name' do
+    
     it "should return a string for a class name appended with 'Connection' " do
       ConnectionManager::Connections.connection_class_name("my_database").should eql("MyDatabaseConnection")
     end
@@ -34,22 +40,54 @@ describe ConnectionManager::Connections do
       ConnectionManager::Connections.connection_class_name("db/my_database_test.sqlite3").should eql("MyDatabaseConnection")
     end
     it "should use the database name from the database.yml if supplied string is only is only the Rails.env" do
-      ConnectionManager::Connections.stubs(:database_name_from_yml).returns("MyTest")
+      ConnectionManager::Connections.stubs(:database_name_from_yml).returns("my_test_test")
       ConnectionManager::Connections.connection_class_name("test").should eql("MyTestConnection")
     end
   end
   
-  context '#build_connection_class' do
+   
+  context 'after #initialize' do
     before(:all) do
-     ConnectionManager::Connections.build_connection_class("MyConnectionClass", 'test')
+      # Make sure connections recreated in other tests do not presist to tests tests
+      ConnectionManager::Connections.all.clear
+      ConnectionManager::Connections.replication_connections.clear
+      
+      #Initialize
+      ConnectionManager::Connections.initialize(:env => 'test')
     end
-    it "should add a class with supplied class name to ConnectionManager::Connections" do
-      defined?(ConnectionManager::Connections::MyConnectionClass).should be_true
-      ConnectionManager::Connections::MyConnectionClass.is_a?(Class).should be_true
+    
+    context '#all' do
+      it "should return the database.yml entries for the current rails environment" do
+        ConnectionManager::Connections.all.should eql(["CmConnection", 
+            "Slave1CmConnection", "Slave2CmConnection"])
+      end
     end
-    it "should have a super class of ActiveRecord::Base" do
-      ConnectionManager::Connections::MyConnectionClass.superclass.should eql(ActiveRecord::Base)
+    
+    context '#replication_connections' do
+      it "should return a hash where the keys are the generic undescored names for all connections" do
+        ConnectionManager::Connections.replication_connections.keys.
+          should eql([:cm, :slave_cm])
+      end
+      it "should return a hash where the values are an array of connection class names as strings" do
+        first_value = ConnectionManager::Connections.replication_connections.values.first
+        first_value.class.should eql(Array)
+        defined?((ConnectionManager::Connections.class_eval(first_value[0]))).should be_true
+      end
     end
+    
+    context '#build_connection_class' do
+      before(:all) do
+        ConnectionManager::Connections.build_connection_class("MyConnectionClass", 'test')
+      end
+      it "should add a class with supplied class name to ConnectionManager::Connections" do
+        defined?(ConnectionManager::Connections::MyConnectionClass).should be_true
+        ConnectionManager::Connections::MyConnectionClass.is_a?(Class).should be_true
+      end
+      it "should have a super class of ActiveRecord::Base" do
+        ConnectionManager::Connections::MyConnectionClass.superclass.should eql(ActiveRecord::Base)
+      end
+    end
+    
   end
 end
 
