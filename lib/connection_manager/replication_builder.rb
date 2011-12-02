@@ -88,7 +88,7 @@ module ConnectionManager
         class << self
           delegate :connection, :to => Connections::#{connection_name}
           def model_name
-            "#{model_name}"
+            ActiveModel::Name.new(#{model_name})
           end
         end
         #{'def readonly?; true; end;' if (options[:name] == "readonly" || options[:readonly])}       

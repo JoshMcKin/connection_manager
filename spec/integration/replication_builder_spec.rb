@@ -106,8 +106,10 @@ describe ConnectionManager::ReplicationBuilder do
  
       Fruit.model_name.should_not eql(MyFruit.model_name)
       MyFruit.model_name.should eql("MyFruit")
+      MyFruit.model_name.respond_to?(:plural).should be_true
       MyFruit.slave_1.model_name.should eql("MyFruit")
       MyFruit.slave_1.first.class.should eql(MyFruit::Slave1)
+      
     end
   end
 end
