@@ -14,7 +14,7 @@ ConnectionManager is available through [Rubygems](https://rubygems.org/gems/conn
 
     $ gem install connection_manager
 
-## Rails 3 setup (Rails 2 untested at this time please let me know if it works for you )
+## Rails 3 setup (No Rails 2 at this time)
 
 ConnectionManager assumes the primary connection for the model is the master. For standard
 models using the default connection this means the main Rails database connection is the master.
