@@ -89,6 +89,7 @@ module ConnectionManager
           def connection
             Connections::#{connection_name}.connection
           end
+
           def model_name
             ActiveModel::Name.new(#{name})
           end
