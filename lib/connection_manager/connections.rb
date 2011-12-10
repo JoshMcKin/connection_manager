@@ -15,10 +15,12 @@ module ConnectionManager
         @env = env
       end
     
-      # Get the current Rails environment if defined
-      # TODO add sinatra
+      # Get the current environment if defined
+      # Check for Rails, check for RACK_ENV, fail back to 'development'
       def fetch_env
-        Rails.env if defined?(Rails)
+        return Rails.env if defined?(Rails)
+        return RACK_ENV if defined?(RACK_ENV)
+        "development"
       end
     
       # Grab only thoses connections that correspond to the current env. If env
@@ -92,13 +94,9 @@ module ConnectionManager
           send("#{k.to_s}=",v)
         end     
         connection_keys.each do |connection|
-          #puts ActiveRecord::Base.configurations["test"]
           new_connection = connection_class_name(connection)  
-          #puts ActiveRecord::Base.configurations["test"]
           add_replication_connection(connection,new_connection)
-          #puts ActiveRecord::Base.configurations["test"]
           build_connection_class(new_connection,connection) 
-          #puts ActiveRecord::Base.configurations["test"]
         end
         all
       end 
