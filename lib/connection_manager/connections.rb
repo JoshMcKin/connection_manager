@@ -103,7 +103,7 @@ module ConnectionManager
         all
       end 
     
-      # Addes a conneciton subclass to AvailableConnections using the supplied
+      # Addes a conneciton subclass to Connections using the supplied
       # class name and connection key from database.yml
       def build_connection_class(class_name,connection_key)
         class_eval <<-STR, __FILE__, __LINE__
