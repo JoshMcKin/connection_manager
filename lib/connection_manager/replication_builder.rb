@@ -86,7 +86,9 @@ module ConnectionManager
       class #{class_name} < self
         #{build_replication_associations(class_name)}
         class << self
-          delegate :connection, :to => Connections::#{connection_name}
+          def connection
+            Connections::#{connection_name}.connection
+          end
           def model_name
             ActiveModel::Name.new(#{name})
           end
