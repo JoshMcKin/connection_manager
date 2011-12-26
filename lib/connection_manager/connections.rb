@@ -104,12 +104,18 @@ module ConnectionManager
       # Addes a conneciton subclass to Connections using the supplied
       # class name and connection key from database.yml
       def build_connection_class(class_name,connection_key)
-        class_eval <<-STR, __FILE__, __LINE__
-        class #{class_name} < ActiveRecord::Base
+##        class_eval <<-STR, __FILE__, __LINE__
+##        class #{class_name} < ActiveRecord::Base
+#          self.abstract_class = true
+#          establish_connection("#{connection_key}")
+#        end
+#        #STR
+        klass = Class.new(ActiveRecord::Base) do         
           self.abstract_class = true
-          establish_connection("#{connection_key}")
+          self.establish_connection(connection_key)       
         end
-        STR
+        #Object.const_set class_name, klass
+        const_set class_name, klass
         all << class_name
       end
     end
