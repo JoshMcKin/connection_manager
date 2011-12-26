@@ -17,4 +17,10 @@ slave_2_cm_test:
   adapter: sqlite3
   database: spec/cm_test.sqlite3
   pool: 5
+  timeout: 5000
+  
+shard_1_cm_test:
+  adapter: sqlite3
+  database: spec/legacy_cm_test.sqlite3
+  pool: 5
   timeout: 5000 

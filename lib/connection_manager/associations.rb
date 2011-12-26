@@ -26,4 +26,3 @@ module ConnectionManager
     end   
   end
 end
-ActiveRecord::Base.extend(ConnectionManager::Associations) 
