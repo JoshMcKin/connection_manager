@@ -2,11 +2,11 @@ require 'spec_helper'
 
 # Tests for associations build form replication.
 
-describe ConnectionManager::ReplicationBuilder do
+describe ConnectionManager::SecondaryConnectionBuilder do
   before(:all) do
     # Make sure connections recreated in other tests do not presist to current
     ConnectionManager::Connections.all.clear
-    ConnectionManager::Connections.replication_connections.clear
+    ConnectionManager::Connections.secondary_connections.clear
       
     #Initialize
     ConnectionManager::Connections.initialize(:env => 'test')
@@ -44,8 +44,7 @@ describe ConnectionManager::ReplicationBuilder do
   context "slave" do
     context('belongs_to') do
       it "should return the same belongs to object as master" do
-        fruit = Factory.create(:fruit)
-        
+        fruit = Factory.create(:fruit)      
         slave_fruit = Fruit.slave.where(:id => fruit.id).first
         slave_fruit.region.id.should eql(fruit.region.id)
       end

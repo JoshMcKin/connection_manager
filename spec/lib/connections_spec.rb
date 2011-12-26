@@ -10,20 +10,20 @@ describe ConnectionManager::Connections do
     end
   end
   
-  context '#clean_bd_name' do
+  context '#clean_db_name' do
     context "when name is not just the Rails.env" do
       it "should remove the Rails.env from the string" do
-        ConnectionManager::Connections.clean_bd_name("my_database_test").should eql("my_database")
+        ConnectionManager::Connections.clean_db_name("my_database_test").should eql("my_database")
       end
     end
     context "when the name is only the Rails.env" do
       it "should use the name of the database and remove the Rails.env" do
         ConnectionManager::Connections.stubs(:database_name_from_yml).returns("my_database_test")
-        ConnectionManager::Connections.clean_bd_name("test").should eql("my_database")
+        ConnectionManager::Connections.clean_db_name("test").should eql("my_database")
       end
       it "should account for sqlite3 database name" do
         ConnectionManager::Connections.stubs(:database_name_from_yml).returns("db/my_database_test.sqlite3")
-        ConnectionManager::Connections.clean_bd_name("test").should eql("my_database")
+        ConnectionManager::Connections.clean_db_name("test").should eql("my_database")
       end
     end
   end
@@ -50,7 +50,7 @@ describe ConnectionManager::Connections do
     before(:all) do
       # Make sure connections recreated in other tests do not presist to tests tests
       ConnectionManager::Connections.all.clear
-      ConnectionManager::Connections.replication_connections.clear
+      ConnectionManager::Connections.secondary_connections.clear
       
       #Initialize
       ConnectionManager::Connections.initialize(:env => 'test')
@@ -58,18 +58,18 @@ describe ConnectionManager::Connections do
     
     context '#all' do
       it "should return the database.yml entries for the current rails environment" do
-        ConnectionManager::Connections.all.should eql(["CmConnection", 
-            "Slave1CmConnection", "Slave2CmConnection"])
+        ConnectionManager::Connections.all.should eql(["CmConnection",
+            "Slave1CmConnection", "Slave2CmConnection", "Shard1CmConnection"])
       end
     end
     
-    context '#replication_connections' do
+    context '#secondary_connections' do
       it "should return a hash where the keys are the generic undescored names for all connections" do
-        ConnectionManager::Connections.replication_connections.keys.
-          should eql([:cm, :slave_cm])
+        ConnectionManager::Connections.secondary_connections.keys.
+          should eql([:cm, :slave_cm, :shard_cm])
       end
       it "should return a hash where the values are an array of connection class names as strings" do
-        first_value = ConnectionManager::Connections.replication_connections.values.first
+        first_value = ConnectionManager::Connections.secondary_connections.values.first
         first_value.class.should eql(Array)
         defined?((ConnectionManager::Connections.class_eval(first_value[0]))).should be_true
       end
@@ -86,8 +86,7 @@ describe ConnectionManager::Connections do
       it "should have a super class of ActiveRecord::Base" do
         ConnectionManager::Connections::MyConnectionClass.superclass.should eql(ActiveRecord::Base)
       end
-    end
-    
+    end   
   end
 end
 
