@@ -3,7 +3,7 @@ module ConnectionManager
     class << self
       @connection_keys
       @all
-      @replication_connections
+      @secondary_connections
       @env 
     
       def env
@@ -36,23 +36,23 @@ module ConnectionManager
       end
     
       # Holds connections
-      def replication_connections
-        @replication_connections ||= {}
+      def secondary_connections
+        @secondary_connections ||= {}
       end
     
       # Returns the database value given a connection key from the database.yml
       def database_name_from_yml(name_from_yml)
-        ActiveRecord::Base.configurations[name_from_yml]['database']
+        clean_db_name(ActiveRecord::Base.configurations[name_from_yml]['database'])
       end
-    
-      def clean_sqlite_db_name(name)
+      
+      def clean_sqlite_db_name(name,remove_env=true)
         new_name = "#{name}".gsub(/(\.sqlite3$)/,'')  
         new_name = new_name.split("/").last 
-        new_name.gsub!(Regexp.new("(\_#{env}$)"),'')
+        new_name.gsub!(Regexp.new("(\_#{env}$)"),'') if remove_env
         new_name
       end
       
-      def clean_bd_name(name)
+      def clean_db_name(name)
         new_name = "#{name}".gsub(Regexp.new("#{env}$"),'')
         if new_name.blank?
           new_name = "#{database_name_from_yml(name)}"
@@ -64,27 +64,27 @@ module ConnectionManager
       # Given an connection key name from the database.yml, returns the string 
       # equivelent of the class name for that entry.
       def connection_class_name(name_from_yml)
-        new_class_name = clean_bd_name(name_from_yml)  
+        new_class_name = clean_db_name(name_from_yml)  
         new_class_name = new_class_name.gsub(/\_/,' ').titleize.gsub(/ /,'')
         new_class_name << "Connection"
         new_class_name
       end 
      
-      def replication_key(name_from_yml)
-        rep_name = clean_bd_name(name_from_yml)
+      def secondary_key(name_from_yml)
+        rep_name = clean_db_name(name_from_yml)
         rep_name.gsub!(/(\_)+(\d+)/,'')
         rep_name.to_sym   
       end
     
-      def add_replication_connection(name_from_yml,new_connection)    
-        key = replication_key(name_from_yml)
-        replication_connections[key] ||= []
-        replication_connections[key] << new_connection
-        replication_connections
+      def add_secondary_connection(name_from_yml,new_connection)    
+        key = secondary_key(name_from_yml)
+        secondary_connections[key] ||= []
+        secondary_connections[key] << new_connection
+        secondary_connections
       end
     
-      def connections_for_replication(rep_collection_key)
-        replication_connections[(rep_collection_key.gsub(Regexp.new("(\_#{env}$)"),'')).to_sym]
+      def available_secondary_connections(rep_collection_key)
+        secondary_connections[(rep_collection_key.gsub(Regexp.new("(\_#{env}$)"),'')).to_sym]
       end
     
       # Sets class instance attributes, then builds connection classes, while populating
@@ -95,7 +95,7 @@ module ConnectionManager
         end     
         connection_keys.each do |connection|
           new_connection = connection_class_name(connection)  
-          add_replication_connection(connection,new_connection)
+          add_secondary_connection(connection,new_connection)
           build_connection_class(new_connection,connection) 
         end
         all
