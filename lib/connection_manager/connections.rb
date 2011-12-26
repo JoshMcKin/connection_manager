@@ -112,10 +112,10 @@ module ConnectionManager
 #        #STR
         klass = Class.new(ActiveRecord::Base) do         
           self.abstract_class = true
-          self.establish_connection(connection_key)       
         end
         #Object.const_set class_name, klass
-        const_set class_name, klass
+        new_connection_class = (const_set class_name, klass)
+        new_connection_class.establish_connection(connection_key)       
         all << class_name
       end
     end
