@@ -1,15 +1,16 @@
 require 'spec_helper'
-
 class Foo < ActiveRecord::Base
   belongs_to :that
   has_many :foo_bars
   has_many :bars, :through => :foo_bars
   has_one :noob
 end
+
 class Bar < ActiveRecord::Base
   has_many :foo_bars
   has_many :foos, :through => :foo_bars
 end
+
 describe ConnectionManager::Associations do
   
   it "should add associations as keys to @defined_associations" do
