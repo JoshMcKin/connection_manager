@@ -16,7 +16,7 @@ module ConnectionManager
       end
     
       # Get the current environment if defined
-      # Check for Rails, check for RACK_ENV, fail back to 'development'
+      # Check for Rails, check for RACK_ENV, default to 'development'
       def fetch_env
         return Rails.env if defined?(Rails)
         return RACK_ENV if defined?(RACK_ENV)
@@ -104,13 +104,6 @@ module ConnectionManager
       # Addes a conneciton subclass to Connections using the supplied
       # class name and connection key from database.yml
       def build_connection_class(class_name,connection_key)
-##        class_eval <<-STR, __FILE__, __LINE__
-##        class #{class_name} < ActiveRecord::Base
-#          self.abstract_class = true
-#          establish_connection("#{connection_key}")
-#        end
-#        #STR
-        
         klass = Class.new(ActiveRecord::Base) do         
           self.abstract_class = true
         end
