@@ -119,7 +119,7 @@ available slave connections each time it is called using a different connection 
     User.slave.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_user_data_development 
 
 ## TODO's
-* sharding
+* sharding - IN 2.0 AS BETA
 
 ## Other activerecord Connection gems
 * [Octopus](https://github.com/tchandy/octopus)
