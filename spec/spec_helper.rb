@@ -5,7 +5,7 @@ require 'active_record'
 require 'factory_girl'
 require 'helpers/database_spec_helper'
 
-TestDB.connect
+TestDB.connect('mysql2')
 TestMigrations.up
 FactoryGirl.find_definitions
 

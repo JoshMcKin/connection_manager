@@ -33,6 +33,7 @@ describe ConnectionManager::SecondaryConnectionBuilder do
     
     context "subclasses" do
       it "should have a superclass of the parent class" do
+        
         Fruit::Slave1.superclass.should eql(Fruit)
       end
     end
@@ -94,7 +95,7 @@ describe ConnectionManager::SecondaryConnectionBuilder do
   end
   context "model_name for slave" do
     it "should return the supers model_name" do
-      Fruit.slave.model_name.should eql(Fruit.model_name)
+      Fruit.slave_1.model_name.should eql(Fruit.model_name)
     end
     
     it "should not interfear with inheritance" do
@@ -102,7 +103,6 @@ describe ConnectionManager::SecondaryConnectionBuilder do
       class MyFruit < Fruit
         replicated
       end
- 
       Fruit.model_name.should_not eql(MyFruit.model_name)
       MyFruit.model_name.should eql("MyFruit")
       MyFruit.model_name.respond_to?(:plural).should be_true
