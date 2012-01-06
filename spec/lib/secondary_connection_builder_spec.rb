@@ -4,7 +4,7 @@ describe ConnectionManager::SecondaryConnectionBuilder do
   
   context '#database_name' do
     it "should return the name of the database the model is using" do
-      Fruit.database_name.should eql('spec/cm_test.sqlite3')
+      Fruit.database_name.should eql('cm_test')
     end
   end
 

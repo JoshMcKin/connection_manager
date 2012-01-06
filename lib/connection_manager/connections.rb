@@ -15,6 +15,12 @@ module ConnectionManager
         @env = env
       end
     
+      def env_regex(with_underscore=true)
+        s = "#{env}$"
+        s.insert(0,"\_") if with_underscore
+        Regexp.new("(#{s})")
+      end
+      
       # Get the current environment if defined
       # Check for Rails, check for RACK_ENV, default to 'development'
       def fetch_env
@@ -27,7 +33,7 @@ module ConnectionManager
       # is blank it grabs all the connection keys
       def connection_keys
         @connection_keys ||= ActiveRecord::Base.configurations.keys.
-          select{|n| n.match(Regexp.new("(#{env}$)"))}
+          select{|n| n.match(env_regex(false))}
       end
     
       # Contains all the connection classes built
@@ -48,12 +54,12 @@ module ConnectionManager
       def clean_sqlite_db_name(name,remove_env=true)
         new_name = "#{name}".gsub(/(\.sqlite3$)/,'')  
         new_name = new_name.split("/").last 
-        new_name.gsub!(Regexp.new("(\_#{env}$)"),'') if remove_env
+        new_name.gsub!(env_regex,'') if remove_env
         new_name
       end
       
       def clean_db_name(name)
-        new_name = "#{name}".gsub(Regexp.new("#{env}$"),'')
+        new_name = "#{name}".gsub(env_regex(false),'')
         if new_name.blank?
           new_name = "#{database_name_from_yml(name)}"
         end  
@@ -64,7 +70,7 @@ module ConnectionManager
       # Given an connection key name from the database.yml, returns the string 
       # equivelent of the class name for that entry.
       def connection_class_name(name_from_yml)
-        new_class_name = clean_db_name(name_from_yml)  
+        new_class_name = clean_db_name(name_from_yml)
         new_class_name = new_class_name.gsub(/\_/,' ').titleize.gsub(/ /,'')
         new_class_name << "Connection"
         new_class_name
@@ -84,7 +90,7 @@ module ConnectionManager
       end
     
       def available_secondary_connections(rep_collection_key)
-        secondary_connections[(rep_collection_key.gsub(Regexp.new("(\_#{env}$)"),'')).to_sym]
+        secondary_connections[(rep_collection_key.gsub(env_regex,'')).to_sym]
       end
     
       # Sets class instance attributes, then builds connection classes, while populating
@@ -94,8 +100,8 @@ module ConnectionManager
           send("#{k.to_s}=",v)
         end     
         connection_keys.each do |connection|
-          new_connection = connection_class_name(connection)  
-          add_secondary_connection(connection,new_connection)
+          new_connection = connection_class_name(connection)
+          add_secondary_connection(connection,new_connection)        
           build_connection_class(new_connection,connection) 
         end
         all
@@ -109,7 +115,6 @@ module ConnectionManager
         end
         new_connection_class = Object.const_set(class_name, klass)
         new_connection_class.establish_connection(connection_key)       
-
         (const_set class_name, new_connection_class)
         all << class_name
       end

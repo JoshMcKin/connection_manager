@@ -49,37 +49,43 @@ module ConnectionManager
       build_secondary_connections(options)
     end
     
-    def sharded(*settings)   
+    def shard(*settings)   
       options = {:name => "shard", :readonly => false, :shards => true}.merge(settings.extract_options!) 
       build_secondary_connections(options)
     end
-        
+    
+    def child_connection_class?
+      false
+    end    
     # Adds subclass with the class name of the type provided in the options, which 
     # defaults to 'slave' if blank, that uses the connection from a connection class.
     # If :database option is blank?, replicated will assume the database.yml has
     # slave connections defined as: slave_database_name_test or slave_1_database_name_test, 
     # where slave_1 is the secondary instance, 'database_name' is the actual 
     # name of the database and '_test' is the Rails environment
-    def build_secondary_connections(options={})     
-      connection_classes = secondary_connection_classes(options)  
-      if connection_classes.blank?
-        raise ArgumentError, " a secondary connection was not found. Check your database.yml."
-      else   
-        connection_methods = []
-        connection_classes.each do |c|
-          under_scored = c.underscore
-          method_name = under_scored.split("_")[0]
-          method_name = method_name.insert(method_name.index(/\d/),"_")
-          class_name = method_name.classify
-          connection_methods << method_name.to_sym
-          build_secondary_class(class_name,c,options)
-          build_single_secondary_method(method_name,class_name)
-          set_table_name_for_joins
+    def build_secondary_connections(options={})   
+      unless name.match(/\:\:/)
+        connection_classes = secondary_connection_classes(options)  
+        sub_classes = []
+        if connection_classes.blank?
+          raise ArgumentError, " a secondary connection was not found. Check your database.yml."
+        else   
+          connection_methods = []
+          connection_classes.each do |c|
+            under_scored = c.underscore
+            method_name = under_scored.split("_")[0]
+            method_name = method_name.insert(method_name.index(/\d/),"_")
+            class_name = method_name.classify
+            connection_methods << method_name.to_sym
+            build_secondary_class(class_name,c,options)
+            build_single_secondary_method(method_name,class_name)
+            #set_table_name_for_joins
+            sub_classes << "#{self.name}::#{class_name}".constantize if options[:shards]
+          end
         end
+        build_slaves_method(connection_methods)  if options[:replication]
+        build_shards_method(sub_classes)  if options[:shards]
       end
-      
-      build_slaves_method(connection_methods)  if options[:replication]
-      build_shards_method(connection_methods)  if options[:shards]
     end
     
     # Creats a subclass that inherets from the model. The default model_name 
@@ -93,38 +99,50 @@ module ConnectionManager
     #   User::Slave2.where(:id => 2).first => returns results from slave_2 database
     #   User::Shard1.where(:id => 2).first => returns results from slave_1 database
     def build_secondary_class(class_name,connection_name,options)
-      class_eval <<-STR, __FILE__, __LINE__
-      class #{class_name} < self
-        #{build_secondary_associations(class_name)}
+      klass = Class.new(self) do
+        class << self
+          def model_name
+            ActiveModel::Name.new(superclass)
+          end         
+          def child_connection_class?
+            true  
+          end
+        end
+        
+        if (options[:name] == "readonly" || options[:readonly])
+          def readonly?
+            true
+          end
+        end
+      end 
+ 
+      sub_class = const_set(class_name, klass)
+      sub_class.build_secondary_associations(class_name)      
+      sub_class.class_eval <<-STR, __FILE__, __LINE__
         class << self
           def connection
             Connections::#{connection_name}.connection
           end
-          def model_name
-            ActiveModel::Name.new(#{name})
-          end
         end
-        #{'def readonly?; true; end;' if (options[:name] == "readonly" || options[:readonly])}       
-      end       
       STR
+      
+      sub_class
     end
     
-    def set_table_name_for_joins
-      self.table_name_prefix = "#{database_name}." unless database_name.match(/\.sqlite3$/)
-    end
+#    def set_table_name_for_joins
+#      self.table_name_prefix = "#{database_name}." unless database_name.match(/\.sqlite3$/)
+#    end
     
     # Adds as class method to call a specific secondary conneciton.
     # Usage:
     #   User.slave_1.where(:id => 2).first => returns results from slave_1 database
     #   User.slave_2.where(:id => 2).first => returns results from slave_2 database
     def build_single_secondary_method(method_name,class_name)
-      class_eval <<-STR, __FILE__, __LINE__
-        class << self
-          def #{method_name}
-            self::#{class_name}
-          end      
-        end 
-      STR
+      self.class.instance_eval do       
+        define_method method_name.to_s do
+          "#{name}::#{class_name}".constantize
+        end
+      end
     end
     
     # add a class method that shifts through available connections methods
@@ -132,35 +150,27 @@ module ConnectionManager
     # Usage:
     #   User.slave.where(:id => 2).first => can return results from slave_1 or slave_2 
     def build_slaves_method(connection_methods)
-      class_eval <<-STR, __FILE__, __LINE__
-      @connection_methods = #{connection_methods}
-      class << self
-        def slaves
+      @connection_methods = connection_methods
+      self.class.instance_eval do       
+        define_method 'slaves' do
           current = @connection_methods.shift
           @connection_methods << current
           send(current)
         end
-        alias :slave :slaves
-        def connection_methods
-          @connection_methods
-        end
-      end     
-      STR
+        alias_method :slave, :slaves
+      end
     end
     
     # add a class method that shifts through available connections methods
     # on each call.
     # Usage:
     #   User.shards.where(:id => 2).first => can return results from slave_1 or slave_2 
-    def build_shards_method(connection_methods)
-      class_eval <<-STR, __FILE__, __LINE__
-      @shard_connection_methods = #{connection_methods}
-      class << self
-        def shards
-          ConnectionManager::MethodRecorder.new(@shard_connection_methods)
+    def build_shards_method(connection_classes)    
+      self.class.instance_eval do
+        define_method 'shards' do
+          ConnectionManager::MethodRecorder.new(connection_classes)
         end
-      end     
-      STR
+      end
     end
   end
 end
