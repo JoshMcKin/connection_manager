@@ -1,6 +1,6 @@
 class TestDB
-  def self.connect
-    ActiveRecord::Base.configurations = YAML::load(File.open(File.join(File.dirname(__FILE__),'..','database.yml')))
+  def self.connect(driver='sqlite')
+    ActiveRecord::Base.configurations = YAML::load(File.open(File.join(File.dirname(__FILE__),'..',"#{driver}_database.yml")))
     ActiveRecord::Base.establish_connection('test') 
   end
   def self.clean
@@ -18,7 +18,8 @@ end
 class TestMigrations < ActiveRecord::Migration  
   
   # all the ups
-  def self.up  
+  def self.up(connection_name='test')  
+    ActiveRecord::Base.establish_connection(connection_name) 
     begin
       create_table :foos do |t|
         t.string :name
@@ -54,7 +55,8 @@ class TestMigrations < ActiveRecord::Migration
   
  
   # all the downs
-  def self.down 
+  def self.down(connection_name='test')  
+    ActiveRecord::Base.establish_connection(connection_name) 
     begin
       [:foos,:fruits,:baskets,:fruit_baskets,:regions,:types].each do |t|
         drop_table t 
