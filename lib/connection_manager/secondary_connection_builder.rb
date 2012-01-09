@@ -77,9 +77,9 @@ module ConnectionManager
             method_name = method_name.insert(method_name.index(/\d/),"_")
             class_name = method_name.classify
             connection_methods << method_name.to_sym
+            set_table_name_for_joins
             build_secondary_class(class_name,c,options)
-            build_single_secondary_method(method_name,class_name)
-            #set_table_name_for_joins
+            build_single_secondary_method(method_name,class_name)            
             sub_classes << "#{self.name}::#{class_name}".constantize if options[:shards]
           end
         end
@@ -129,9 +129,9 @@ module ConnectionManager
       sub_class
     end
     
-#    def set_table_name_for_joins
-#      self.table_name_prefix = "#{database_name}." unless database_name.match(/\.sqlite3$/)
-#    end
+    def set_table_name_for_joins
+      self.table_name_prefix = "#{database_name}." unless database_name.match(/\.sqlite3$/)
+    end
     
     # Adds as class method to call a specific secondary conneciton.
     # Usage:

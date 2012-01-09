@@ -11,7 +11,11 @@ common: &common
 test:
   <<: *common
   database: cm_test
- 
+  
+cm_user_test:
+  <<: *common
+  database: cm_user_test
+  
 slave_1_cm_test:
   <<: *common  
   database: cm_test

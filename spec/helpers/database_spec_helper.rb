@@ -18,11 +18,12 @@ end
 class TestMigrations < ActiveRecord::Migration  
   
   # all the ups
-  def self.up(connection_name='test')  
+  def self.up(connection_name='test', user_connection_name='cm_user_test')  
     ActiveRecord::Base.establish_connection(connection_name) 
     begin
       create_table :foos do |t|
         t.string :name
+        t.integer :user_id
       end 
       create_table :fruits do |t|
         t.string :name
@@ -50,12 +51,19 @@ class TestMigrations < ActiveRecord::Migration
     rescue => e
       puts "tables failed to create: #{e}"
     end
-  
+    ActiveRecord::Base.establish_connection(user_connection_name)
+    begin
+      create_table :users do |t|
+        t.string :name
+      end
+    rescue => e
+      puts "tables failed to create: #{e}"
+    end
+    ActiveRecord::Base.establish_connection(connection_name)
   end
   
- 
   # all the downs
-  def self.down(connection_name='test')  
+  def self.down(connection_name='test',user_connection_name='cm_user_test')  
     ActiveRecord::Base.establish_connection(connection_name) 
     begin
       [:foos,:fruits,:baskets,:fruit_baskets,:regions,:types].each do |t|
@@ -64,7 +72,14 @@ class TestMigrations < ActiveRecord::Migration
     rescue => e
       puts "tables were not dropped: #{e}"
     end
-  end 
-  
-  
+    ActiveRecord::Base.establish_connection(user_connection_name) 
+    begin
+      [:users].each do |t|
+        drop_table t 
+      end
+    rescue => e
+      puts "tables were not dropped: #{e}"
+    end
+    ActiveRecord::Base.establish_connection(connection_name)  
+  end  
 end 
