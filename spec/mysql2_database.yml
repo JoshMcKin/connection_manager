@@ -4,7 +4,7 @@
 common: &common
   adapter: mysql2
   username: root
-  password: some_password
+  password: omegared
   pool: 100
   timeout: 5000
   
