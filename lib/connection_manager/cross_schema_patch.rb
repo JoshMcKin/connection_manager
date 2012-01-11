@@ -92,9 +92,9 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
                   [aliased_table[foreign_key].eq(parent_table[reflection.options[:primary_key] || parent.primary_key]), as_conditions].reject{ |x| x.blank? }
                 end
               when :belongs_to
-                #aliased_table[options[:primary_key] || reflection.klass.primary_key].eq(parent_table[options[:foreign_key] || reflection.primary_key_name]), as_conditions].reject{ |x| x.blank? }
+                [aliased_table[options[:primary_key] || reflection.klass.primary_key].eq(parent_table[options[:foreign_key] || reflection.primary_key_name] || find_belongs_to_arel_column(parent_table)), as_conditions].reject{ |x| x.blank? }
             
-                [aliased_table[options[:primary_key] || reflection.klass.primary_key].eq(find_belongs_to_arel_column(parent_table)), as_conditions].reject{ |x| x.blank? }
+                #[aliased_table[options[:primary_key] || reflection.klass.primary_key].eq(find_belongs_to_arel_column(parent_table)), as_conditions].reject{ |x| x.blank? }
            
               end
 
@@ -110,8 +110,7 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
             end
 
             def find_belongs_to_arel_column(parent_table)
-              parent_table.columns.select{|c| (c.name == options[:foreign_key].to_sym)}[0] ||
-                parent_table.columns.select{|c| (c.name == reflection.primary_key_name.to_sym)}[0]
+              parent_table.columns.select{|c| (c.name == (options[:foreign_key] || reflection.primary_key_name).to_sym)}[0]
             end
           end
         end
