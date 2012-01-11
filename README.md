@@ -120,6 +120,7 @@ available slave connections each time it is called using a different connection 
 
 ## TODO's
 * sharding - IN 2.0 AS BETA
+* cross schema joins - 2.2 AS BETA tested with Mysql2 ONLY
 
 ## Other activerecord Connection gems
 * [Octopus](https://github.com/tchandy/octopus)
