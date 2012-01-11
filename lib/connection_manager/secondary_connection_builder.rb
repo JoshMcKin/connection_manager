@@ -1,6 +1,6 @@
 module ConnectionManager
   module SecondaryConnectionBuilder
-    
+   
     def database_name
       "#{connection.instance_variable_get(:@config)[:database].to_s}"
     end
@@ -77,7 +77,7 @@ module ConnectionManager
             method_name = method_name.insert(method_name.index(/\d/),"_")
             class_name = method_name.classify
             connection_methods << method_name.to_sym
-            set_table_name_for_joins
+#            set_table_name_for_joins
             build_secondary_class(class_name,c,options)
             build_single_secondary_method(method_name,class_name)            
             sub_classes << "#{self.name}::#{class_name}".constantize if options[:shards]
@@ -125,8 +125,13 @@ module ConnectionManager
           end
         end
       STR
-      
+      connection_sub_classes << sub_class
+      puts connection_sub_classes
       sub_class
+    end
+    
+    def connection_sub_classes
+      @connection_sub_classes ||= []
     end
     
     def set_table_name_for_joins
