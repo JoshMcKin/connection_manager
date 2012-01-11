@@ -126,7 +126,6 @@ module ConnectionManager
         end
       STR
       connection_sub_classes << sub_class
-      puts connection_sub_classes
       sub_class
     end
     
