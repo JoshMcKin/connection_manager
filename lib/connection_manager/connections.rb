@@ -2,8 +2,6 @@ module ConnectionManager
   class Connections
     class << self
       @connection_keys
-      @all
-      @secondary_connections
       @env 
     
       def env
@@ -36,33 +34,29 @@ module ConnectionManager
           select{|n| n.match(env_regex(false))}
       end
     
-      # Contains all the connection classes built
-      def all
-        @all ||= []
+      def exists_in_database_yml?(name_from_yml)
+        !ActiveRecord::Base.configurations[name_from_yml].blank?
       end
-    
-      # Holds connections
-      def secondary_connections
-        @secondary_connections ||= {}
+      
+      def database_yml_attributes(name_from_yml)
+        ActiveRecord::Base.configurations[name_from_yml].symbolize_keys if exists_in_database_yml?(name_from_yml)
       end
-    
+      
       # Returns the database value given a connection key from the database.yml
       def database_name_from_yml(name_from_yml)
-        clean_db_name(ActiveRecord::Base.configurations[name_from_yml]['database'])
+        clean_db_name(database_yml_attributes(name_from_yml)[:database]) if exists_in_database_yml?(name_from_yml)
       end
       
       def clean_sqlite_db_name(name,remove_env=true)
-        new_name = "#{name}".gsub(/(\.sqlite3$)/,'')  
+        new_name = "#{name}".gsub(/(\.sqlite3$)/,'') 
         new_name = new_name.split("/").last 
         new_name.gsub!(env_regex,'') if remove_env
         new_name
       end
       
       def clean_db_name(name)
-        new_name = "#{name}".gsub(env_regex(false),'')
-        if new_name.blank?
-          new_name = "#{database_name_from_yml(name)}"
-        end  
+        new_name = "#{name}".gsub(env_regex(false),'')      
+        new_name = "#{database_name_from_yml(name)}"if new_name.blank?
         new_name = clean_sqlite_db_name(new_name)
         new_name.gsub(/\_$/,'')
       end
@@ -95,29 +89,27 @@ module ConnectionManager
     
       # Sets class instance attributes, then builds connection classes, while populating
       # available_connctions and replication_connection
-      def initialize(options={})  
+      def build_connection_classes(options={})  
         options.each do |k,v|
           send("#{k.to_s}=",v)
         end     
         connection_keys.each do |connection|
-          new_connection = connection_class_name(connection)
-          add_secondary_connection(connection,new_connection)        
-          build_connection_class(new_connection,connection) 
+          build_connection_class(connection_class_name(connection),connection) 
         end
-        all
       end 
     
       # Addes a conneciton subclass to Connections using the supplied
       # class name and connection key from database.yml
       def build_connection_class(class_name,connection_key)
-        klass = Class.new(ActiveRecord::Base) do         
-          self.abstract_class = true
+        begin
+          class_name.constantize
+        rescue NameError       
+          klass = Class.new(ActiveRecord::Base) do         
+            self.establish_managed_connection(connection_key, {:class_name => class_name})
+          end
+          new_connection_class = Object.const_set(class_name, klass)      
+          (const_set class_name, new_connection_class)
         end
-        new_connection_class = Object.const_set(class_name, klass)
-        new_connection_class.table_name_prefix=("#{ActiveRecord::Base.configurations[connection_key]['database']}.")
-        new_connection_class.establish_connection(connection_key)       
-        (const_set class_name, new_connection_class)
-        all << class_name
       end
     end
   end

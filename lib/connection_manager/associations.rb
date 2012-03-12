@@ -11,18 +11,26 @@ module ConnectionManager
       defined_associations[:belongs_to] ||= []
       defined_associations[:belongs_to] << options
       super
+      after_association
     end
     
     def has_many(*options)
       defined_associations[:has_many] ||= []
       defined_associations[:has_many] << options
       super
+      after_association
     end
     
     def has_one(*options)
       defined_associations[:has_one] ||= []
       defined_associations[:has_one] << options
       super
-    end   
+      after_association
+    end
+    
+    # Hook to run code after assocation is defined
+    def after_association
+      
+    end
   end
 end

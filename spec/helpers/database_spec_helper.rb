@@ -1,6 +1,10 @@
 class TestDB
+  def self.yml(driver='sqlite')
+    YAML::load(File.open(File.join(File.dirname(__FILE__),'..',"#{driver}_database.yml")))
+  end
+  
   def self.connect(driver='sqlite')
-    ActiveRecord::Base.configurations = YAML::load(File.open(File.join(File.dirname(__FILE__),'..',"#{driver}_database.yml")))
+    ActiveRecord::Base.configurations = yml(driver)
     ActiveRecord::Base.establish_connection('test') 
   end
   def self.clean
@@ -51,6 +55,7 @@ class TestMigrations < ActiveRecord::Migration
     rescue => e
       puts "tables failed to create: #{e}"
     end
+    
     ActiveRecord::Base.establish_connection(user_connection_name)
     begin
       create_table :users do |t|
@@ -59,6 +64,7 @@ class TestMigrations < ActiveRecord::Migration
     rescue => e
       puts "tables failed to create: #{e}"
     end
+    
     ActiveRecord::Base.establish_connection(connection_name)
   end
   
