@@ -27,6 +27,10 @@ module ConnectionManager
     def managed_connection_classes
       managed_connections.values.flatten
     end
+    
+    def yml_key
+      @yml_key
+    end
    
     # Establishes and checks in a connection for abstract classes.
     # EX:
@@ -36,6 +40,7 @@ module ConnectionManager
     #
     def establish_managed_connection(yml_key,opts={})
       opts[:class_name] = self.name if opts[:class_name].blank?
+      @yml_key = yml_key
       establish_connection(yml_key) 
       self.abstract_class = true
       set_to_readonly if readonly? || opts[:readonly] 

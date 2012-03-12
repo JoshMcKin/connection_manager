@@ -30,12 +30,13 @@ module ConnectionManager
     end
        
     # replication asscoaitions
-    def replication_association_options(method,association,class_name,options={})
+    def replication_association_options(method,association,connection_class_name,options={})
       new_options = {}.merge(options)
+#     new_options[:class_name] = options[:replication_class_name] if options[:replication_class_name]
       if new_options[:class_name].blank?
-        new_options[:class_name] = "#{association.to_s.singularize.classify}::#{class_name}"
+        new_options[:class_name] = "#{association.to_s.singularize.classify}.slaves"
       else
-        new_options[:class_name] = "#{new_options[:class_name]}::#{class_name}"
+        new_options[:class_name] = "#{new_options[:class_name]}.slaves"
       end
       
       if [:has_one,:has_many].include?(method) && new_options[:foreign_key].blank? 
@@ -45,19 +46,19 @@ module ConnectionManager
     end
     
     # builds a string that defines the replication associations for use with eval
-    def build_replication_associations(class_name)
-#      str = ""
-#      defined_associations.each do |method,defs|
-#        unless defs.blank?
-#          defs.each do |association,options|
-#            options = {} if options.blank?
-#            unless options[:class_name].to_s.match("::#{class_name}")
-#              str << "#{method.to_s} :#{association}, #{replication_association_options(method,association,class_name,options)};" 
-#            end
-#          end
-#        end
-#      end
-#      str
+    def build_replication_associations(connection_class_name)
+      str = ""
+      defined_associations.each do |method,defs|
+        unless defs.blank?
+          defs.each do |association,options|
+            options = {} if options.blank?
+            unless options[:class_name].to_s.match(/Child$/) 
+              str << "#{method.to_s} :#{association}, #{replication_association_options(method,association,connection_class_name,options)};" 
+            end
+          end
+        end
+      end
+      str
     end 
     
     # Builds replication connection classes and methods
@@ -79,10 +80,10 @@ module ConnectionManager
     
     # Runs methods to build replication connections. Replication connection class are
     # appended with 'Child'
-    def build_replication_resources(class_name,method_name,connection_methods,options)
-      child_class_name = "#{self.name}#{class_name}Child"
+    def build_replication_resources(connection_class_name,method_name,connection_methods,options)
+      child_class_name = "#{self.name}#{connection_class_name}Child"
       connection_methods << method_name.to_sym     
-      replication_connections[method_name] = build_replication_class(class_name,child_class_name,options)
+      replication_connections[method_name] = build_replication_class(connection_class_name,child_class_name,options)
       build_single_replication_method(method_name)            
     end
     
@@ -116,7 +117,7 @@ module ConnectionManager
     #   UserSlave1ConnectionChild.where(:id => 1).first => returns results from slave_1 database
     #   UserSlave2ConnectionChild.where(:id => 2).first => returns results from slave_2 database
     #   UserShardConnectionChild.where(:id => 2).first => returns results from shard database
-    def build_replication_class(class_name,child_class_name,options)    
+    def build_replication_class(connection_class_name,child_class_name,options)    
       begin
         rep_class = class_eval(child_class_name)
       rescue NameError 
@@ -133,7 +134,7 @@ module ConnectionManager
           end
         end          
         rep_class = Object.const_set(child_class_name, klass)
-        if options[:readonly] || class_name.constantize.readonly?     
+        if options[:readonly] || connection_class_name.constantize.readonly?     
           rep_class.class_eval do
             define_method(:readonly?) do 
               true
@@ -143,12 +144,12 @@ module ConnectionManager
         rep_class.class_eval <<-STR, __FILE__, __LINE__       
             class << self             
               def connection
-                #{class_name}.connection
+                #{connection_class_name}.connection
               end
             end
         STR
       end   
-      rep_class.build_replication_associations(class_name)      
+      rep_class.build_replication_associations(connection_class_name)      
       rep_class
     end
      
@@ -183,9 +184,9 @@ module ConnectionManager
     # should the super class be redefined else where with other associations added,
     # think Rails engine...
     def after_association
-#      replication_connections.values.each do |rep|
-#        rep.constantize.class_eval(build_replication_associations(rep))
-#      end
+      replication_connections.values.each do |rep|
+        rep.constantize.class_eval(build_replication_associations(rep))
+      end
     end
   end
 end
