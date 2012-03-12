@@ -11,12 +11,12 @@ describe ConnectionManager::Replication do
     
     it "should add :class_name options set to the replication subclass if :class_name is blank" do
       options = Fruit.replication_association_options(:has_one, :plant, 'Slave')
-      options[:class_name].should eql("Plant::Slave")
+      options[:class_name].should eql("Plant.slaves")
     end
       
     it "should append :class_name with the replication subclass if :class_name is not bank" do
       options = Fruit.replication_association_options(:has_one, :plant, 'Slave', :class_name => 'Plant')
-      options[:class_name].should eql("Plant::Slave")
+      options[:class_name].should eql("Plant.slaves")
     end
     
     context "has_one or has_many" do
