@@ -19,11 +19,17 @@ cm_user_test:
 slave_1_cm_test:
   <<: *common  
   database: cm_test
+  readonly: true
   
 slave_2_cm_test:
   <<: *common
   database: cm_test
+  readonly: false
   
 shard_1_cm_test:  
    <<: *common
    database: legacy_cm_test
+
+slave_1_cm_user_test:
+  <<: *common
+  database: cm_user_test

@@ -14,7 +14,8 @@ module ConnectionManager
     
     def execute_recordings
       results = []
-      classes_to_call.each do |class_to_call|
+      classes_to_call.each do |class_to_call_name|
+        class_to_call = class_to_call_name.constantize
         called = nil
         recordings.each do |name,args|
           args = args[0] if [Array, Hash].include?args[0].class 

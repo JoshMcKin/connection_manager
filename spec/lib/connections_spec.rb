@@ -44,35 +44,11 @@ describe ConnectionManager::Connections do
       ConnectionManager::Connections.connection_class_name("test").should eql("MyTestConnection")
     end
   end
-  
-   
-  context 'after #initialize' do
+    
+  context 'after #build_connection_classes' do
     before(:all) do
-      # Make sure connections recreated in other tests do not presist to tests tests
-      ConnectionManager::Connections.all.clear
-      ConnectionManager::Connections.secondary_connections.clear
-      
-      #Initialize
-      ConnectionManager::Connections.initialize(:env => 'test')
-    end
-    
-    context '#all' do
-      it "should return the database.yml entries for the current rails environment" do
-        ConnectionManager::Connections.all.should eql(["CmConnection",
-            "Slave1CmConnection", "Slave2CmConnection", "Shard1CmConnection"])
-      end
-    end
-    
-    context '#secondary_connections' do
-      it "should return a hash where the keys are the generic undescored names for all connections" do
-        ConnectionManager::Connections.secondary_connections.keys.
-          should eql([:cm, :slave_cm, :shard_cm])
-      end
-      it "should return a hash where the values are an array of connection class names as strings" do
-        first_value = ConnectionManager::Connections.secondary_connections.values.first
-        first_value.class.should eql(Array)
-        defined?((ConnectionManager::Connections.class_eval(first_value[0]))).should be_true
-      end
+      #build_connection_classes
+      ConnectionManager::Connections.build_connection_classes(:env => 'test')
     end
     
     context '#build_connection_class' do
@@ -80,11 +56,11 @@ describe ConnectionManager::Connections do
         ConnectionManager::Connections.build_connection_class("MyConnectionClass", 'test')
       end
       it "should add a class with supplied class name to ConnectionManager::Connections" do
-        defined?(ConnectionManager::Connections::MyConnectionClass).should be_true
-        ConnectionManager::Connections::MyConnectionClass.is_a?(Class).should be_true
+        defined?(MyConnectionClass).should be_true
+        MyConnectionClass.is_a?(Class).should be_true
       end
       it "should have a super class of ActiveRecord::Base" do
-        ConnectionManager::Connections::MyConnectionClass.superclass.should eql(ActiveRecord::Base)
+        MyConnectionClass.superclass.should eql(ActiveRecord::Base)
       end
     end   
   end

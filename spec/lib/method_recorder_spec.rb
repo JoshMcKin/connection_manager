@@ -1,13 +1,15 @@
 require 'spec_helper'
-
 describe ConnectionManager::MethodRecorder do
   before(:all) do
-    TestMigrations.up('shard_1_cm_test')
-    ConnectionManager::Connections.initialize(:env => 'test')
-    class Fruit < ActiveRecord::Base
-      shard(:using => ["shard_1_cm_test"])    
+    ConnectionManager::Connections.build_connection_classes(:env => 'test')
+    
+    class SouthernFruit < Fruit
+      self.table_name = 'fruits'  
     end
     
+    class Fruit
+      shard_models("SouthernFruit")    
+    end   
   end
   context 'shards'do    
     it "it should record methods" do
@@ -35,9 +37,5 @@ describe ConnectionManager::MethodRecorder do
         (a == b && b == c).should be_true
       end
     end
-  end
-  after(:all) do
-    TestMigrations.down('shard_1_cm_test')
-    ActiveRecord::Base.establish_connection('test') 
   end
 end
