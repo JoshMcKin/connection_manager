@@ -1,12 +1,12 @@
 # ConnectionManager
 Replication and Multi-Database ActiveRecord add on.
 
-## Goals
-* Take the lib I've been using finally make something out of it ;)
-* Use connection classes, instead of establish_connection on every model, to ensure connection pooling
-* Use non-adapter specific code.
-* Use the default database.yml as single point for all database configurations (no extra .yml files)
-* When slave objects are used in html helpers like link_to and form_for the created urls match those created using a master object
+
+## Background
+ActiveRecord, for quite some time now, has supported multiple database connections 
+through the use of establish_connection and connection classes [more info](http://api.rubyonrails.org/classes/ActiveRecord/Base.html)
+Multiple databases, replication and shards can be implemented directly in rails, but 
+a gem would real help reduce redundant code and ensure consistency. 
 
 ## Installation
 
@@ -16,17 +16,21 @@ ConnectionManager is available through [Rubygems](https://rubygems.org/gems/conn
 
 ## Rails 3 setup (No Rails 2 at this time)
 
-ConnectionManager assumes the primary connection for the model is the master. For standard
-models using the default connection this means the main Rails database connection is the master.
+Add em_aws to you gemfile:
+    
+    gem 'connection_manager'
 
-Example database.yml
+Run bundle install:
+    
+    bundle install
+
+### Example database.yml
 
     common: &common
     adapter: mysql2
     username: root
     password: *****
-    database_timezone: local
-    pool: 100
+    pool: 20
     connect_timeout: 20
     timeout: 900
     socket: /tmp/mysql.sock
@@ -34,62 +38,75 @@ Example database.yml
     development:
       <<: *common
       database: test_app
+      replications: [slave_1_test_app_development, slave_2_test_app_development]
 
     slave_1_test_app_development:
       <<: *common
       database: test_app
+      readonly: true
   
     slave_2_test_app_development:
       <<: *common
       database: test_app
+      readonly: true
 
     user_data_development
       <<: *common
       database: user_data
+      replications: [slave_1_user_data_development, slave_2_user_data_development]
 
     slave_1_user_data_development
       <<: *common
       database: user_data
+      readonly: true
 
     slave_2_user_data_development
       <<: *common
       database: user_data
+      readonly: true
 
 In the above database.yml the Master databases are listed as "development" and "user_data_development".
-As you can see the replication database name follow a strict standard for the connection names. 
-For slave_1_test_app_development, "slave" is the name of the replication, "1" is the count, "test_app"
-is the databases name and finally the "development" is the environment. (Of course in your database.yml
-each slave would have a different connection to is replication :)
+Replication databases are defined as normally connections and are added to the 'replications:' option for
+their master. The readonly option ensures all ActiveRecord objects returned from this connection are ALWAYS readonly.
 
-
-## Multiple Databases
-
-At startup ConnectionManager builds connection classes  to ConnectionManager::Connections
-using the connections described in your database.yml based on the current rails environment.
-
-You can use a different master by having the model inherit from one of your ConnectionManager::Connections.
-
-To view your ConnectionManager::Connections, at the Rails console type:
-
-   ConnectionManager::Connections.all => ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection"]
-
-If your using the example database.yml your array would look like this:
-    ["TestAppConnection", "Slave1TestAppConnection", "Slave2TestAppConnection", 
-    "UserDataConnection", "Slave1UserDataConnection", "Slave2UserDataConnection"]
-
-
-To use one of your ConnectionManager::Connections for your models default/master database
-setup your model like the following
+### Building Connection Classes
     
-    class User < ConnectionManager::Connections::UserDataConnection
-        # model code ...
+ConnectionManager provides establish_managed_connection for build connection 
+classes and connection to multiple databases.
+
+    class MyConnection < ActiveRecord::Base
+      establish_managed_connection("my_database_#{Rails.env}", :readonly => true)
     end
+    
+    class User < MyConnection
+    end
+    
+    MyConnection    => MyConnection(abstract)
+    @user = User.first
+    @user.readonly? => true
+
+The establish_managed_connection method, runs establish_connection with the supplied
+database.yml key, sets abstract_class to true, and (since :readonly is set to true) ensures
+all ActiveRecord objects build using this connection class are readonly. If readonly is set
+to true in the database.yml, passing the readonly option is not necessary.  
+
+You mcan build all your connections classes or you can have ConnectionManager do it for you. 
+The connection class names will be based on the database.yml keys.
+
+    # If RAKE_ENV or Rails.env == development
+    # database.yml keys: development, slave_1_development, slave_2_development  
+
+    ConnectionManager::Connections.build_connection_classes
+    ActiveRecord::Base.managed_connections => ["BaseConnection", "Slave1Connection", "Slave2Connection"]
+
+The build_connection_classes finds all the entries in the database.yml for the current environment
+a builds connection classes for each.
 
 ## Replication
 
 Simply add 'replicated' to your model beneath any defined associations
     
-    class User < ConnectionManager::Connections::UserDataConnection
+    class User < UserDataConnection
         has_one :job
         has_many :teams
         replicated # implement replication        

@@ -1,7 +1,9 @@
 require 'active_support/core_ext/hash/indifferent_access'
+require 'thread'
 module ConnectionManager
-  module Replication   
-        
+  module Replication 
+    @replication_methods = []
+
     # Contains all the replication connections available to this class where the
     # key is the method for calling the connection
     def replication_connections
@@ -14,6 +16,10 @@ module ConnectionManager
       false
     end
     
+    def replicated?
+      @replicated == true
+    end
+    
     # EX: 
     # class MyClass < ActiveRecord::Base
     #   replicated :my_readonly_db, "FooConnection", readonly => true, :method_name => 'east_region'
@@ -23,46 +29,47 @@ module ConnectionManager
     # * :method_name - name of class method to call to access replication, default to slave
     # * :readonly - forces all results to readonly
     # * :using - list of connections to use--- DEPRECIATED
-    def replicated(*connections)   
+    def replicated(*connections)
+      @replicated = true
       options = {:method_name => "slaves"}.merge(connections.extract_options!)
-      connections = options[:using] if options[:using]
+      if options[:using]
+      connections = options[:using] 
+          warn "[DEPRECATION] :using option is deprecated.  Please use list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild'."
+      end
+      connections = connection.replication_keys if connections.blank?
       build_replication_connections(connections,options)
     end
+    
+    replicated if ConnectionManager::Connections.auto_replicate? && self.superclass.name != "ActiveRecord::Base"
+
        
-    # replication asscoaitions
-    def replication_association_options(method,association,connection_class_name,options={})
+    # replication associations
+    def replication_association_options(method,options={})
       new_options = {}.merge(options)
-#     new_options[:class_name] = options[:replication_class_name] if options[:replication_class_name]
-      if new_options[:class_name].blank?
-        new_options[:class_name] = "#{association.to_s.singularize.classify}.slaves"
-      else
-        new_options[:class_name] = "#{new_options[:class_name]}.slaves"
-      end
-      
-      if [:has_one,:has_many].include?(method) && new_options[:foreign_key].blank? 
-        new_options[:foreign_key] = "#{table_name.singularize}_id"
-      end     
+      new_options[:readonly] = true if readonly?
+      new_options[:class_name] = new_options[:replication_class_name] if new_options[:replication_class_name]
+      new_options[:foreign_key] = "#{table_name.split('.').last.singularize}_id" if ([:has_one,:has_many,:has_and_belongs_to].include?(method) && new_options[:foreign_key].blank?) 
       new_options
     end
     
     # builds a string that defines the replication associations for use with eval
-    def build_replication_associations(connection_class_name)
+    def build_replication_associations(defined_associations)
       str = ""
       defined_associations.each do |method,defs|
         unless defs.blank?
           defs.each do |association,options|
-            options = {} if options.blank?
+            options = {} if options.blank?         
             unless options[:class_name].to_s.match(/Child$/) 
-              str << "#{method.to_s} :#{association}, #{replication_association_options(method,association,connection_class_name,options)};" 
+              str << "#{method.to_s} :#{association}, #{replication_association_options(method,options)};" 
             end
           end
         end
       end
-      str
+      class_eval(str)
     end 
     
     # Builds replication connection classes and methods
-    def build_replication_connections(connections,options) 
+    def build_replication_connections(connections,options={}) 
       options[:method_name] ||= 'slaves'
       raise ArgumentError, "connections are required."if connections.blank?
       unless replication_class?        
@@ -119,7 +126,7 @@ module ConnectionManager
     #   UserShardConnectionChild.where(:id => 2).first => returns results from shard database
     def build_replication_class(connection_class_name,child_class_name,options)    
       begin
-        rep_class = class_eval(child_class_name)
+        rep_klass = class_eval(child_class_name)
       rescue NameError 
         klass = Class.new(self) do
           self.table_name = "#{table_name}"
@@ -127,30 +134,31 @@ module ConnectionManager
           class << self
             def model_name
               superclass.model_name
-            end         
+            end 
+            
             def replication_class?
               true  
             end
           end
-        end          
-        rep_class = Object.const_set(child_class_name, klass)
+        end
+        klass.class_eval <<-STR, __FILE__, __LINE__       
+           def self.connection
+             '#{connection_class_name}'.constantize.connection
+           end
+        STR
+        
         if options[:readonly] || connection_class_name.constantize.readonly?     
-          rep_class.class_eval do
+          klass.class_eval do
             define_method(:readonly?) do 
               true
             end
           end       
-        end      
-        rep_class.class_eval <<-STR, __FILE__, __LINE__       
-            class << self             
-              def connection
-                #{connection_class_name}.connection
-              end
-            end
-        STR
+        end
+        klass.build_replication_associations(defined_associations)
+        rep_klass = Object.const_set(child_class_name, klass)     
+        
       end   
-      rep_class.build_replication_associations(connection_class_name)      
-      rep_class
+      rep_klass
     end
      
     # Adds as class method to call a specific replication conneciton.
@@ -165,18 +173,29 @@ module ConnectionManager
       end
     end
     
+    def _replication_mutex
+      @replication_mutex ||= (connection.using_em_adapter? ? EM::Synchrony::Thread::Mutex.new : Mutex.new)
+    end
+    
+    # Make sure multiple threads do not through off our shifting
+    def fetch_replication_method
+      _replication_mutex.synchronize {
+        current = @replication_methods.shift
+        @replication_methods << current
+        send(current)
+      }
+    end
+
     # add a class method that shifts through available connections methods
     # on each call.
     # Usage:
     #   User.slave.where(:id => 2).first => can return results from slave_1 or slave_2 
     def build_replication_method(connection_methods,method_name='slaves')
-      @replication_methods = connection_methods
-      self.class.instance_eval do       
+      @replication_methods = connection_methods       
+      self.class.instance_eval do            
         define_method method_name do
-          current = @replication_methods.shift
-          @replication_methods << current
-          send(current)
-        end
+          fetch_replication_method
+        end        
       end
     end
     
@@ -185,7 +204,7 @@ module ConnectionManager
     # think Rails engine...
     def after_association
       replication_connections.values.each do |rep|
-        rep.constantize.class_eval(build_replication_associations(rep))
+        rep.constantize.build_replication_associations(defined_associations)
       end
     end
   end

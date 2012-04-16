@@ -9,11 +9,11 @@ module ConnectionManager
   require 'connection_manager/associations'
   require 'connection_manager/shards'  
   require 'connection_manager/replication'
-  require 'connection_manager/method_recorder'
   require 'connection_manager/connection_manager_railtie' if defined?(Rails) 
   
   # Patches
   require 'connection_manager/patches/cross_schema_patch.rb' if (ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0)
+  require 'connection_manager/patches/association_patches.rb'
   
   # Helpers
   ActiveRecord::ConnectionAdapters::AbstractAdapter.send(:include,(ConnectionManager::AbstractAdapterHelper))

@@ -43,7 +43,7 @@ module ConnectionManager
       @yml_key = yml_key
       establish_connection(yml_key) 
       self.abstract_class = true
-      set_to_readonly if readonly? || opts[:readonly] 
+      set_to_readonly if readonly? || opts[:readonly] || self.connection.readonly?
       managed_connections[yml_key] ||= []
       managed_connections[yml_key] << opts[:class_name] unless self.managed_connections[yml_key].include?(opts[:class_name])
       self.table_name_prefix = "#{self.database_name}." unless self.database_name.match(/\.sqlite3$/)

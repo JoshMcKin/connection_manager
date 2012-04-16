@@ -14,14 +14,22 @@ RSpec.configure do |config|
   # Loads database.yml and establishes primary connection
   # Create tables when tests are completed
   config.before(:all) {
-    require 'helpers/models_spec_helper'    
+    require 'helpers/models_spec_helper.rb'    
   }
+  
   # Drops tables when tests are completed
-  config.after(:each){
+  config.after(:all){
      TestDB.clean
   }
-  config.after(:all){
+  
+  # Make sure every test is isolated.
+  config.before(:each){
+    ModelsHelper.models.each{|m| Object.send(:remove_const, m)}  
+    load 'helpers/models_spec_helper.rb'
+    FactoryGirl.reload
   }
+  
+  
 end
 
 
