@@ -1,18 +1,39 @@
 module ConnectionManager
   class Connections
     class << self
+      @@config = {:auto_replicate => false, :env => 'development'}     
       @connection_keys
-      @env 
-    
+      
+      # Hold config options
+      def config(options={})
+        @@config = (@@config.merge!(options)) unless options.empty?
+        @@config
+      end
+      
+      # Easy access to env
       def env
-        @env ||= fetch_env
-        @env
+        @@config[:env]
       end
     
       def env=env
-        @env = env
+        @@config[:env] = env
+        @@config[:env]
       end
-    
+      
+      # Easy access to auto_replicate
+      def auto_replicate
+        @@config[:auto_replicate]
+      end
+      
+      def auto_replicate=auto_replicate
+        @@config[:auto_replicate] = auto_replicate
+        @@config[:auto_replicate]
+      end  
+            
+      def auto_replicate?
+        (@@config[:auto_replicate] == true)
+      end
+      
       def env_regex(with_underscore=true)
         s = "#{env}$"
         s.insert(0,"\_") if with_underscore
@@ -61,28 +82,22 @@ module ConnectionManager
         new_name.gsub(/\_$/,'')
       end
       
+      # Creates a string to be used for the class name. Removes the current env.
+      def clean_yml_key(name)
+        new_name = "#{name}".gsub(env_regex(false),'')      
+        new_name = "Base"if new_name.blank?
+        new_name.gsub(/\_$/,'')
+      end
+      
       # Given an connection key name from the database.yml, returns the string 
       # equivelent of the class name for that entry.
       def connection_class_name(name_from_yml)
-        new_class_name = clean_db_name(name_from_yml)
+        new_class_name = clean_yml_key(name_from_yml)
         new_class_name = new_class_name.gsub(/\_/,' ').titleize.gsub(/ /,'')
         new_class_name << "Connection"
         new_class_name
       end 
-     
-      def secondary_key(name_from_yml)
-        rep_name = clean_db_name(name_from_yml)
-        rep_name.gsub!(/(\_)+(\d+)/,'')
-        rep_name.to_sym   
-      end
-    
-      def add_secondary_connection(name_from_yml,new_connection)    
-        key = secondary_key(name_from_yml)
-        secondary_connections[key] ||= []
-        secondary_connections[key] << new_connection
-        secondary_connections
-      end
-    
+      
       def available_secondary_connections(rep_collection_key)
         secondary_connections[(rep_collection_key.gsub(env_regex,'')).to_sym]
       end
@@ -111,6 +126,14 @@ module ConnectionManager
           (const_set class_name, new_connection_class)
         end
       end
+      
+      
+#      require 'active_record/schema_dumper'
+#      filename = ENV['SCHEMA'] || "#{Rails.root}/db/schema.rb"
+#      File.open(filename, "w:utf-8") do |file|
+#        ActiveRecord::Base.establish_connection(Rails.env)
+#        ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
+#      end
     end
   end
 end

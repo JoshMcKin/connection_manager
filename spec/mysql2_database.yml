@@ -11,10 +11,12 @@ common: &common
 test:
   <<: *common
   database: cm_test
+  replications: [slave_1_cm_test, slave_2_cm_test]
   
 cm_user_test:
   <<: *common
   database: cm_user_test
+  replications: [slave_1_cm_user_test]
   
 slave_1_cm_test:
   <<: *common  
@@ -33,3 +35,4 @@ shard_1_cm_test:
 slave_1_cm_user_test:
   <<: *common
   database: cm_user_test
+  readonly: true

@@ -1,13 +1,15 @@
 require 'spec_helper'
 # Tests for associations build form replication.
 describe ConnectionManager::Replication do
-  before(:all) do
+  before(:each) do
     # Add Replication to models
     ConnectionManager::Connections.build_connection_classes(:env => 'test')
-    Fruit.replicated(:slave_1_cm_test)
-    Basket.replicated(:slave_1_cm_test)
-    FruitBasket.replicated(:slave_1_cm_test)
-    Region.replicated(:slave_2_cm_test)
+    
+    
+    Fruit.replicated("CmReplicationConnection", "CmReplication2Connection")
+    Basket.replicated("CmReplicationConnection", "CmReplication2Connection")
+    FruitBasket.replicated("CmReplicationConnection", "CmReplication2Connection")
+    Region.replicated("CmReplicationConnection", "CmReplication2Connection")
   end
   
   context "models that have been replicated" do
@@ -25,7 +27,7 @@ describe ConnectionManager::Replication do
     
     context "subclasses" do
       it "should have a superclass of the parent class" do     
-        FruitCmReplicationConnectionChild.superclass.should eql(Fruit)
+        FruitCmReplicationConnectionChild.superclass.name.should eql(Fruit.name)
       end
     end
   end
@@ -33,7 +35,7 @@ describe ConnectionManager::Replication do
   context "slaves" do
     context('belongs_to') do
       it "should return the same belongs to object as master" do
-        fruit = Factory.create(:fruit)      
+        fruit = FactoryGirl.create(:fruit)      
         slave_fruit = Fruit.slaves.where(:id => fruit.id).first
         slave_fruit.region.id.should eql(fruit.region.id)
       end
@@ -41,7 +43,7 @@ describe ConnectionManager::Replication do
   
     context('has_one') do
       it "should return the same has_on object as master" do
-        region = Factory.create(:fruit).region
+        region = FactoryGirl.create(:fruit).region
         slave_region = Region.slaves.where(:id => region.id).first
         slave_region.fruit.id.should eql(region.fruit.id)
       end
@@ -49,9 +51,9 @@ describe ConnectionManager::Replication do
   
     context('has_many') do
       it "should return the same has_many objects as master" do
-        fruit = Factory.create(:fruit)
+        fruit = FactoryGirl.create(:fruit)
         3.times do
-          Factory.create(:fruit_basket, :fruit_id => fruit.id)
+          FactoryGirl.create(:fruit_basket, :fruit_id => fruit.id)
         end
         fruit.fruit_baskets.length.should eql(3)
         slave_fruit = Fruit.slaves.where(:id => fruit.id).first     
@@ -62,7 +64,7 @@ describe ConnectionManager::Replication do
    
     context('has_many :through') do   
       it "should return the same fruit as master" do
-        basket = Factory.create(:fruit_basket)
+        basket = FactoryGirl.create(:fruit_basket)
         slave_fruit = Fruit.slaves.where(:id => basket.fruit_id).first
         master_fruit = Fruit.where(:id => basket.fruit_id).first   
         slave_fruit.basket_ids.should eql(master_fruit.basket_ids)
@@ -71,14 +73,14 @@ describe ConnectionManager::Replication do
     
     context "readonly" do
      it "should return a readonly object by default" do
-       Factory.create(:fruit)
+       FactoryGirl.create(:fruit)
        readonly_fruit = Fruit.slaves.first
        readonly_fruit.readonly?.should be_true
        lambda { readonly_fruit.save }.should raise_error
      end
      it "should not return readonly if replicated readonly is to false" do
-       Factory.create(:region)
-       Region.slaves.first.readonly?.should be_false
+       FactoryGirl.create(:region)
+       Region.cm_replication2_connection.first.readonly?.should be_false
      end
    end
   end
@@ -89,7 +91,7 @@ describe ConnectionManager::Replication do
     end
     
     it "should not interfear with inheritance" do
-      Factory.create(:fruit)
+      FactoryGirl.create(:fruit)
       class MyFruit < Fruit
         replicated("CmReplicationConnection")
       end
