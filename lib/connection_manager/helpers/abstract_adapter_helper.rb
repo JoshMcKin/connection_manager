@@ -12,7 +12,7 @@ module ConnectionManager
       (config[:readonly] == true)
     end 
     
-    def replicated
+    def replicated?
       !config[:replications].blank?
     end
    

@@ -3,7 +3,7 @@ require 'thread'
 module ConnectionManager
   module Replication 
     @replication_methods = []
-
+    @replication_method_name = ""
     # Contains all the replication connections available to this class where the
     # key is the method for calling the connection
     def replication_connections
@@ -33,34 +33,33 @@ module ConnectionManager
       @replicated = true
       options = {:method_name => "slaves"}.merge(connections.extract_options!)
       if options[:using]
-      connections = options[:using] 
-          warn "[DEPRECATION] :using option is deprecated.  Please use list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild'."
+        connections = options[:using] 
+        warn "[DEPRECATION] :using option is deprecated.  Please list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild'."
       end
       connections = connection.replication_keys if connections.blank?
       build_replication_connections(connections,options)
     end
-    
-    replicated if ConnectionManager::Connections.auto_replicate? && self.superclass.name != "ActiveRecord::Base"
-
        
     # replication associations
-    def replication_association_options(method,options={})
+    def replication_association_options(method,association,method_name='slaves',options={})
+      klass_method_name = method_name.classify
+      klass_method_name = "Slave" if klass_method_name == "Slafe"
       new_options = {}.merge(options)
       new_options[:readonly] = true if readonly?
-      new_options[:class_name] = new_options[:replication_class_name] if new_options[:replication_class_name]
+      new_options[:class_name] = (new_options[:class_name].blank? ? "#{association.to_s.singularize.classify}::#{klass_method_name}" : "#{new_options[:class_name]}::#{klass_method_name}")
       new_options[:foreign_key] = "#{table_name.split('.').last.singularize}_id" if ([:has_one,:has_many,:has_and_belongs_to].include?(method) && new_options[:foreign_key].blank?) 
       new_options
     end
     
     # builds a string that defines the replication associations for use with eval
-    def build_replication_associations(defined_associations)
+    def build_replication_associations(defined_associations,method_name)
       str = ""
       defined_associations.each do |method,defs|
         unless defs.blank?
           defs.each do |association,options|
             options = {} if options.blank?         
             unless options[:class_name].to_s.match(/Child$/) 
-              str << "#{method.to_s} :#{association}, #{replication_association_options(method,options)};" 
+              str << "#{method.to_s} :#{association}, #{replication_association_options(method,association,method_name,options)};" 
             end
           end
         end
@@ -70,9 +69,11 @@ module ConnectionManager
     
     # Builds replication connection classes and methods
     def build_replication_connections(connections,options={}) 
-      options[:method_name] ||= 'slaves'
+      options[:name] ||= 'slaves'
       raise ArgumentError, "connections are required."if connections.blank?
-      unless replication_class?        
+      if replication_class?
+        return false
+      else
         connection_methods = []
         connections.each do |to_use| 
           if to_use.to_s.match(/_/)       
@@ -81,8 +82,9 @@ module ConnectionManager
             build_from_class_name(to_use,connection_methods,options)
           end
         end
-        build_replication_method(connection_methods, options[:method_name])      
+        build_replication_method(connection_methods, options[:name])      
       end
+      true
     end
     
     # Runs methods to build replication connections. Replication connection class are
@@ -91,7 +93,8 @@ module ConnectionManager
       child_class_name = "#{self.name}#{connection_class_name}Child"
       connection_methods << method_name.to_sym     
       replication_connections[method_name] = build_replication_class(connection_class_name,child_class_name,options)
-      build_single_replication_method(method_name)            
+      build_single_replication_method(method_name)    
+      add_replication_class(options[:name])
     end
     
     def build_from_class_name(class_name,connection_methods,options)     
@@ -114,7 +117,7 @@ module ConnectionManager
       end
     end  
     
-    # Creats a that inherets from the model. The default model_name 
+    # Creats a class that inherets from the model. The default model_name 
     # class method is overriden to return the super's name, which ensures rails
     # helpers like link_to called on a replication stance generate a url for the
     # master database. If options include readonly, build_replication_class also 
@@ -124,7 +127,7 @@ module ConnectionManager
     #   UserSlave1ConnectionChild.where(:id => 1).first => returns results from slave_1 database
     #   UserSlave2ConnectionChild.where(:id => 2).first => returns results from slave_2 database
     #   UserShardConnectionChild.where(:id => 2).first => returns results from shard database
-    def build_replication_class(connection_class_name,child_class_name,options)    
+    def build_replication_class(connection_class_name,child_class_name,options)
       begin
         rep_klass = class_eval(child_class_name)
       rescue NameError 
@@ -145,6 +148,8 @@ module ConnectionManager
            def self.connection
              '#{connection_class_name}'.constantize.connection
            end
+           
+           @replication_method_name = '#{options[:name]}'
         STR
         
         if options[:readonly] || connection_class_name.constantize.readonly?     
@@ -154,11 +159,23 @@ module ConnectionManager
             end
           end       
         end
-        klass.build_replication_associations(defined_associations)
-        rep_klass = Object.const_set(child_class_name, klass)     
-        
+        klass.build_replication_associations(defined_associations,options[:name])
+        rep_klass = Object.const_set(child_class_name, klass)    
       end   
       rep_klass
+    end
+      
+    # In order to ensure a replication 
+    def add_replication_class(method_name)
+      klass_method_name = method_name.classify
+      klass_method_name = "Slave" if klass_method_name == "Slafe"
+      class_eval <<-STR, __FILE__, __LINE__       
+         class #{klass_method_name} < self
+            def self.constantize
+              super.#{method_name}
+            end
+         end
+      STR
     end
      
     # Adds as class method to call a specific replication conneciton.
@@ -204,7 +221,7 @@ module ConnectionManager
     # think Rails engine...
     def after_association
       replication_connections.values.each do |rep|
-        rep.constantize.build_replication_associations(defined_associations)
+        rep.constantize.build_replication_associations(defined_associations,@replication_method_name)
       end
     end
   end
