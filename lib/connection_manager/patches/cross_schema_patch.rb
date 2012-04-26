@@ -1,12 +1,10 @@
-### https://github.com/rails/rails/issues/539
-### http://tamersalama.com/2010/09/27/nomethoderror-undefined-method-eq-for-nilnilclass/
-### https://github.com/rails/rails/blob/3-0-stable/activerecord/lib/active_record/associations.rb
-# ActiveRecord 3.0 ONLY
+# ActiveRecord 3.0 BACK PORT ONLY
+# https://github.com/brianmario/mysql2/commit/14accdf8d1bf557f652c19b870316094a7441334#diff-0
 
 if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
   module ActiveRecord
     module ConnectionAdapters
-      class Mysql2Adapter     
+      class Mysql2Adapter < AbstractAdapter     
         def tables(name = nil, database = nil) #:nodoc:
           sql = ["SHOW TABLES", database].compact.join(' IN ')
           execute(sql, 'SCHEMA').collect do |field|
@@ -17,9 +15,7 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
         def table_exists?(name)
           return true if super
           name          = name.to_s
-          puts name
           schema, table = name.split('.', 2)
-          puts "#{schema} - #{table}"
           unless table # A table was provided without a schema
             table  = schema
             schema = nil
