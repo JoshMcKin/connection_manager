@@ -5,7 +5,8 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
   module ActiveRecord
     module ConnectionAdapters
       class Mysql2Adapter < AbstractAdapter     
-        def tables(name = nil, database = nil) #:nodoc:
+        
+        def real_tables(name = nil, database = nil) #:nodoc:
           sql = ["SHOW TABLES", database].compact.join(' IN ')
           execute(sql, 'SCHEMA').collect do |field|
             field.first
@@ -20,7 +21,7 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
             table  = schema
             schema = nil
           end
-          tables(nil, schema).include? table
+          real_tables(nil, schema).include? table
         end
       end
     end
