@@ -20,19 +20,19 @@ describe ConnectionManager::Replication do
   context '#replication_association_options' do
     
     it "should add :class_name options set to the replication subclass if :class_name is blank" do
-      options = Fruit.replication_association_options(:has_one, {:replication_class_name => "SlaveFruit"})
-      options[:class_name].should eql("SlaveFruit")
+      options = Fruit.replication_association_options(:has_one, :fruit, 'slaves',{:class_name => "SlaveFruit"})
+      options[:class_name].should eql("SlaveFruit::Slave")
     end
     it "should add :readonly => true if replication model is readonly?" do
       Fruit.stubs(:readonly?).returns(true)
-      options = Fruit.replication_association_options(:has_one, {:replication_class_name => "SlaveFruit"})
+      options = Fruit.replication_association_options(:has_one, :fruit, 'slaves', {:class_name => "SlaveFruit"})
       options[:readonly].should be_true
     end
     context "has_one, has_many and has_and_belongs_to_many" do
       it "should add the :foreign_key if the :foreign_key options is not present" do
-        options = Fruit.replication_association_options(:has_one)
+        options = Fruit.replication_association_options(:has_one,:foo)
         options[:foreign_key].should eql('fruit_id')
-        options = Fruit.replication_association_options(:has_many)
+        options = Fruit.replication_association_options(:has_many,:foo)
         options[:foreign_key].should eql('fruit_id')
       end
     end
@@ -61,7 +61,9 @@ describe ConnectionManager::Replication do
     class CmFooSlaveConnection < ActiveRecord::Base
       establish_managed_connection(:slave_1_cm_test)
     end
-    
+    class CmFooMasterConnection < ActiveRecord::Base
+      establish_managed_connection(:slave_1_cm_test)
+    end
     class CmUserConnection < ActiveRecord::Base
       establish_managed_connection(:cm_user_test)
     end
@@ -70,15 +72,18 @@ describe ConnectionManager::Replication do
       establish_managed_connection(:slave_1_cm_user_test)
     end
     
-    class Foo < ActiveRecord::Base
-      belongs_to :user, :replication_class_name => "UserSlaveCmUserConnectionChild"
-      replicated("CmFooSlaveConnection")
-    end
-    
     class User < CmUserConnection
       has_many :foos
-      replicated('SlaveCmUserConnection')
+      replicated('SlaveCmUserConnection', :name => 'slaves')
+      replicated('CmFooMasterConnection', :name => 'master')
     end
+    
+    class Foo < ActiveRecord::Base
+      belongs_to :user
+      replicated("CmFooSlaveConnection", :name => 'slaves')
+    end
+    
+    
     
     before :all do
       @user = User.new(:name => "Testing")
@@ -95,9 +100,10 @@ describe ConnectionManager::Replication do
     
     it "should work with replication" do
       found = Foo.slaves.select('foos.*, users.name AS user_name').joins(:user).where(:id => @foo.id).first
+      debugger
       found.user.blank?.should be_false
       found.readonly?.should be_true
-      found.user.class.name.should eql("UserSlaveCmUserConnectionChild")
+      found.user.class.name.should eql("User::Slave")
       found.user.readonly?.should be_true
     end
   end 

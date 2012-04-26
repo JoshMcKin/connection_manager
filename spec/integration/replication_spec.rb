@@ -35,7 +35,7 @@ describe ConnectionManager::Replication do
   context "slaves" do
     context('belongs_to') do
       it "should return the same belongs to object as master" do
-        fruit = FactoryGirl.create(:fruit)      
+        fruit = FactoryGirl.create(:fruit)   
         slave_fruit = Fruit.slaves.where(:id => fruit.id).first
         slave_fruit.region.id.should eql(fruit.region.id)
       end

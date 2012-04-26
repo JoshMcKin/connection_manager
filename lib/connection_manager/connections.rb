@@ -1,4 +1,9 @@
 module ConnectionManager
+  
+  def self.config(options={})
+    Connections.config(options)
+  end
+  
   class Connections
     class << self
       @@config = {:auto_replicate => false, :env => 'development'}     
