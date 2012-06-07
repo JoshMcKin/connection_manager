@@ -3,15 +3,19 @@ module ConnectionManager
   module ConnectionHelpers       
     @@managed_connections = HashWithIndifferentAccess.new
     
+    # Returns the database_name of the connection unless set otherwise
     def database_name
-      "#{connection.database_name.to_s}"
+      @database_name = "#{connection.database_name.to_s}" unless @database_name
+      @database_name
     end
     
-    # Returns whether or not a model is readonly only at the class level
+    alias :schema_name :database_name
+    
+    # Returns true if this is a readonly only a readonly model
     # If the connection.readonly? then the model that uses the connection 
     # must be readonly.
     def readonly?
-      ((@readonly == true)||(connection.readonly?))
+      ((@readonly == true)||connection.readonly?)
     end
     
     # Allow setting of readonly at the model level
@@ -24,6 +28,12 @@ module ConnectionManager
       @@managed_connections
     end
     
+    def add_managed_connections(yml_key,value)
+      @@managed_connections[yml_key] ||= []
+      @@managed_connections[yml_key] << value unless @@managed_connections[yml_key].include?(value)
+      @@managed_connections
+    end
+    
     def managed_connection_classes
       managed_connections.values.flatten
     end
@@ -31,22 +41,56 @@ module ConnectionManager
     def yml_key
       @yml_key
     end
+    
+    # Tell Active Record to use a different database/schema on this model.
+    # You may call #use_database when your schemas reside on the same database server
+    # and you do not want to create extra connection class and database.yml entries.
+    # 
+    # Options:
+    # * :table_name_prefix - the prefix required for making cross database/schema
+    # joins for you database managmenet system. By default table_name_prefix is the
+    # database/schema name followed by a period EX: "my_database."
+    # * :table_name - the table name for the model if it does not match ActiveRecord
+    # naming conventions
+    # 
+    # EX: class LegacyUser < ActiveRecord::Base
+    #       use_database('DBUser', :table_name => 'UserData')
+    #     end
+    #     
+    #     LegacyUser.limit(1).to_sql => "SELECT * FROM `BDUser`.`UserData` LIMIT 1
+    #
+    def use_database(database_name,opts={})
+      @database_name = database_name
+      opts[:table_name_prefix] ||= "#{database_name}."
+      opts[:table_name] ||= self.table_name.to_s.split('.').last
+      self.table_name = opts[:table_name]
+      self.table_name_prefix = opts[:table_name_prefix]
+    end
+    
+    alias :use_schema :use_database
    
-    # Establishes and checks in a connection for abstract classes.
+    # Establishes and checks in a connection, noramlly for abstract classes aka connection classes.
+    # 
+    # Options:
+    # * :abstract_class - used the set #abstract_class, default is true
+    # * :readonly - force all instances to readonly
+    # * :class_name - name of connection class name, default is current class's name
+    # * :table_name_prefix - prefix to append to table name for cross database joins,
+    #     default is the "#{self.database_name}."
     # EX:
     #   class MyConnection < ActiveRecord::Base
-    #     establish_managed_connection(:key_from_db_yml,{:readonly => true})
+    #     establish_managed_connection :key_from_db_yml,{:readonly => true}
     #   end
     #
     def establish_managed_connection(yml_key,opts={})
-      opts[:class_name] = self.name if opts[:class_name].blank?
       @yml_key = yml_key
-      establish_connection(yml_key) 
-      self.abstract_class = true
-      set_to_readonly if readonly? || opts[:readonly] || self.connection.readonly?
-      managed_connections[yml_key] ||= []
-      managed_connections[yml_key] << opts[:class_name] unless self.managed_connections[yml_key].include?(opts[:class_name])
-      self.table_name_prefix = "#{self.database_name}." unless self.database_name.match(/\.sqlite3$/)
+      opts = {:class_name => self.name, 
+        :abstract_class => true}.merge(opts)   
+      establish_connection(yml_key)     
+      self.abstract_class = opts[:abstract_class]
+      set_to_readonly if (readonly? || opts[:readonly] || self.connection.readonly?)
+      add_managed_connections(yml_key,opts[:class_name])
+      use_database(self.database_name,opts)
     end
           
     # Override ActiveRecord::Base instance method readonly? to force 

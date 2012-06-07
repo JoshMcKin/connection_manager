@@ -1,7 +1,6 @@
 require 'spec_helper'
 describe ConnectionManager::Shards do
   before(:each) do
-    ConnectionManager::Connections.build_connection_classes(:env => 'test')
     Fruit.shard_class_names("SouthernFruit")            
   end
   context 'shards'do    

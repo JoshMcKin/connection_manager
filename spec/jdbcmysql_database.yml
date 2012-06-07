@@ -2,7 +2,7 @@
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 common: &common
-  adapter: mysql2
+  adapter: jdbcmysql
   username: root
   password: omegared
   pool: 100
