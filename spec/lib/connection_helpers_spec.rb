@@ -1,7 +1,7 @@
 require 'spec_helper'
 describe ConnectionManager::ConnectionHelpers do
   before(:all) do
-    
+ 
     class MyConnectionClass < ActiveRecord::Base
       establish_managed_connection(:test)
     end
@@ -24,7 +24,7 @@ describe ConnectionManager::ConnectionHelpers do
       self.table_name = 'foos'
     end
   end
-  context '#establish_managed_connection' do
+  describe '#establish_managed_connection' do
     context 'the connection class' do
     
       it "should create abstract class" do
@@ -49,6 +49,25 @@ describe ConnectionManager::ConnectionHelpers do
         u = MyReadonlyFoo.new
         u.readonly?.should be_true
       end
+    end
+  end
+  
+  describe '#use_database' do
+    it "should set the database/schema for the model to the supplied schema_name" do
+      Fruit.use_database('my_schema')
+      Fruit.database_name.should eql('my_schema')
+    end
+  
+    it "should set the contactinate the schema_name and table_name; and set the table_name to that value" do
+      Fruit.use_database('my_schema')
+      Fruit.table_name.should eql('fruits')
+      Fruit.table_name_prefix.should eql('my_schema.')
+    end
+  
+    it "should set the table_name if one is supplied" do
+      Fruit.use_database('my_schema',{:table_name => 'apples'})
+      Fruit.table_name.should eql('apples')
+      Fruit.table_name_prefix.should eql('my_schema.')
     end
   end
 end

@@ -1,31 +1,27 @@
-FactoryGirl.define do
+FactoryGirl.define do    
+  sequence :rand_name do |n|
+    "foo#{(n + (n+rand)).to_s[2..6]}"
+  end
+  
   factory :basket do
     name "MyString"
   end
-end
 
-FactoryGirl.define do
   factory :fruit_basket do
     fruit
     basket
   end
-end
 
-FactoryGirl.define do
   factory :fruit do
     name "MyString"
     region
   end
-end
 
-FactoryGirl.define do
   factory :region do
     name "MyString"
   end
-end
 
-FactoryGirl.define do
-  factory :type do
-    name "MyString"
+  factory :type do |f|
+    f.sequence(:name) {FactoryGirl.generate(:rand_name)}
   end
 end

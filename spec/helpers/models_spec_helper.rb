@@ -31,13 +31,17 @@ class Region < ActiveRecord::Base
   #replicated
 end
 
+class Type < ActiveRecord::Base
+  
+end
+
 class SouthernFruit < Fruit
   self.table_name = 'fruits'  
 end
 
 class ModelsHelper
   def self.models
-    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit"]
+    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit", "Type"]
   end 
 end
 

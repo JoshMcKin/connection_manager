@@ -13,15 +13,28 @@ module ConnectionManager
     end 
     
     def replicated?
-      !config[:replications].blank?
+      (!slave_keys.blank? || !master_keys.blank?)
     end
    
     def database_name
       config[:database]
     end
    
-    def replication_keys
-      (config[:replications].collect{|r| r.to_sym} || [])
+    def replication_keys(type=:slaves)
+      return slave_keys if type == :slaves
+      master_keys
+    end
+    
+    def slave_keys
+      slave_keys = []
+      slave_keys = config[:slaves].collect{|r| r.to_sym} if config[:slaves]
+      slave_keys  
+    end
+    
+    def master_keys
+      master_keys = []
+      master_keys = config[:masters].collect{|r| r.to_sym} if config[:masters]
+      master_keys
     end
   end
 end

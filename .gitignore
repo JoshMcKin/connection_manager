@@ -3,4 +3,4 @@ pkg/*
 *.sqlite3
 .bundle
 .DS_Store
-
+log/*

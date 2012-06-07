@@ -1,228 +1,165 @@
 require 'active_support/core_ext/hash/indifferent_access'
-require 'thread'
 module ConnectionManager
   module Replication 
-    @replication_methods = []
-    @replication_method_name = ""
-    # Contains all the replication connections available to this class where the
-    # key is the method for calling the connection
-    def replication_connections
-      @replication_connections ||= HashWithIndifferentAccess.new
+    
+    # Replication methods (replication_method_name, which is the option[:name] for the
+    # #replication method) and all thier associated connections. The key is the
+    # replication_method_name and the value is an array of all the replication_classes
+    # the replication_method has access to.
+    # 
+    # EX: replication_methods[:slaves] => ['Slave1Connection',Slave2Connection]
+    def replication_methods
+      @replication_methods ||= HashWithIndifferentAccess.new
     end
     
-    # Method to know when we are deaing with a model and when we are dealing
-    # with a replication class
-    def replication_class?
-      false
+    def replicant_classes
+      @replicant_classes ||= HashWithIndifferentAccess.new
     end
-    
+       
+    # Is this class replicated
     def replicated?
-      @replicated == true
+      (@replicated == true)
     end
     
+    # Builds a class method that returns an ActiveRecord::Relation for use with
+    # in ActiveRecord method chaining.
+    # 
     # EX: 
     # class MyClass < ActiveRecord::Base
-    #   replicated :my_readonly_db, "FooConnection", readonly => true, :method_name => 'east_region'
+    #   replicated :my_readonly_db, "FooConnection", :method_name => 'slaves'
+    #   end
     # end
     #
     # Options:
-    # * :method_name - name of class method to call to access replication, default to slave
+    # * :name - name of class method to call to access replication, default to slaves
     # * :readonly - forces all results to readonly
-    # * :using - list of connections to use--- DEPRECIATED
+    # * :type - the type of replication; :slave or :master, defaults to :slave
+    # * :using - list of connections to use; can be database.yml key or the name of the connection class --- DEPRECIATED
+    # * A Block may be passed that will be called on each of the newly created child classes  
     def replicated(*connections)
       @replicated = true
-      options = {:method_name => "slaves"}.merge(connections.extract_options!)
+      options = {:name => "slaves"}.merge!(connections.extract_options!)
+      options[:type] ||= :slaves
+      options[:build_replicants] = true if (options[:build_replicants].blank? && options[:type] == :masters)
       if options[:using]
         connections = options[:using] 
-        warn "[DEPRECATION] :using option is deprecated.  Please list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild'."
+        warn "[DEPRECATION] :using option is deprecated.  Please list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild', :name => 'my_slaves'."
       end
-      connections = connection.replication_keys if connections.blank?
-      build_replication_connections(connections,options)
+      
+      # Just incase its blank. Should be formally set by using connection class or at the model manually
+      self.table_name_prefix = "#{database_name}." if self.table_name_prefix.blank?
+      
+      connections = connection.replication_keys(options[:type]) if connections.blank?
+      set_replications_to_method(connections,options[:name])
+      build_repliciation_class_method(options)
+      build_replication_association_class(options)
+      build_query_method_alias_method(options[:name])
+      build_repliciation_instance_method(options[:name])
+      options[:name]
     end
-       
-    # replication associations
-    def replication_association_options(method,association,method_name='slaves',options={})
-      klass_method_name = method_name.classify
-      klass_method_name = "Slave" if klass_method_name == "Slafe"
-      new_options = {}.merge(options)
-      new_options[:readonly] = true if readonly?
-      new_options[:class_name] = (new_options[:class_name].blank? ? "#{association.to_s.singularize.classify}::#{klass_method_name}" : "#{new_options[:class_name]}::#{klass_method_name}")
-      new_options[:foreign_key] = "#{table_name.split('.').last.singularize}_id" if ([:has_one,:has_many,:has_and_belongs_to].include?(method) && new_options[:foreign_key].blank?) 
-      new_options
+      
+    
+    # Get a connection class name from out replication_methods pool
+    # could add mutex but not sure blocking is with it.
+    def fetch_replication_method(method_name)
+      available_connections = @replication_methods[method_name]
+      raise ArgumentError, "No connections found for #{method_name}." if available_connections.blank?
+      available_connections.rotate!
+      available_connections[0]
     end
     
-    # builds a string that defines the replication associations for use with eval
-    def build_replication_associations(defined_associations,method_name)
-      str = ""
-      defined_associations.each do |method,defs|
-        unless defs.blank?
-          defs.each do |association,options|
-            options = {} if options.blank?         
-            unless options[:class_name].to_s.match(/Child$/) 
-              str << "#{method.to_s} :#{association}, #{replication_association_options(method,association,method_name,options)};" 
-            end
-          end
-        end
-      end
-      class_eval(str)
-    end 
-    
+    private
     # Builds replication connection classes and methods
-    def build_replication_connections(connections,options={}) 
-      options[:name] ||= 'slaves'
-      raise ArgumentError, "connections are required."if connections.blank?
-      if replication_class?
-        return false
-      else
-        connection_methods = []
-        connections.each do |to_use| 
-          if to_use.to_s.match(/_/)       
-            build_from_yml_key(to_use,connection_methods,options)
-          else
-            build_from_class_name(to_use,connection_methods,options)
-          end
-        end
-        build_replication_method(connection_methods, options[:name])      
+    def set_replications_to_method(connections,replication_method_name='slaves') 
+      raise ArgumentError, "connections could not be found for #{self.name}." if connections.blank?
+      connections.each do |to_use| 
+        connection_class_name = fetch_connection_class_name(to_use) 
+        replication_methods[replication_method_name] ||= []
+        replication_methods[replication_method_name] << connection_class_name
       end
       true
     end
     
-    # Runs methods to build replication connections. Replication connection class are
-    # appended with 'Child'
-    def build_replication_resources(connection_class_name,method_name,connection_methods,options)
-      child_class_name = "#{self.name}#{connection_class_name}Child"
-      connection_methods << method_name.to_sym     
-      replication_connections[method_name] = build_replication_class(connection_class_name,child_class_name,options)
-      build_single_replication_method(method_name)    
-      add_replication_class(options[:name])
-    end
-    
-    def build_from_class_name(class_name,connection_methods,options)     
-      if(managed_connection_classes.include?(class_name))
-        method_name = class_name.underscore
-        build_replication_resources(class_name,method_name,connection_methods,options)
-      else
-        raise ArgumentError, "A connection for #{class_name} could not be found."   
-      end
+    def fetch_connection_class_name(to_use) 
+      connection_class_name = to_use    
+      connection_class_name = fetch_connection_class_name_from_yml_key(connection_class_name) if connection_class_name.to_s.match(/_/)    
+      raise ArgumentError, "For #{self.name}, the class #{connection_class_name} could not be found." unless (managed_connection_classes.include?(connection_class_name))     
+      connection_class_name
     end
 
-    def build_from_yml_key(yml_key,connection_methods,options)
+    def fetch_connection_class_name_from_yml_key(yml_key)
       found = managed_connections[yml_key]
+      connection_class_name = nil
       if found     
-        class_name = found.first
-        method_name = class_name.underscore
-        build_replication_resources(class_name,method_name,connection_methods,options)
+        connection_class_name = found.first
       else
-        raise ArgumentError, "A connection for #{yml_key} could not be found." 
+        raise ArgumentError, "For #{self.name}, a connection class for #{yml_key} could not be found." 
       end
-    end  
+      connection_class_name
+    end 
     
-    # Creats a class that inherets from the model. The default model_name 
-    # class method is overriden to return the super's name, which ensures rails
-    # helpers like link_to called on a replication stance generate a url for the
-    # master database. If options include readonly, build_replication_class also 
-    # overrides the rails "readonly?" method to ensure saves are prevented. 
-    # replication class can be called directly for operaitons.
-    # Usage: 
-    #   UserSlave1ConnectionChild.where(:id => 1).first => returns results from slave_1 database
-    #   UserSlave2ConnectionChild.where(:id => 2).first => returns results from slave_2 database
-    #   UserShardConnectionChild.where(:id => 2).first => returns results from shard database
-    def build_replication_class(connection_class_name,child_class_name,options)
-      begin
-        rep_klass = class_eval(child_class_name)
-      rescue NameError 
-        klass = Class.new(self) do
-          self.table_name = "#{table_name}"
-          self.table_name_prefix = "#{database_name}." unless self.database_name.match(/\.sqlite3$/)
+    # Adds a class method, that calls #using with the correct connection class name
+    # by calling fetch_replication_method with the method name. Adds readonly
+    # query method class if replication is specified as readonly.
+    def build_repliciation_class_method(options)
+      class_eval <<-STR
+      class << self
+        def #{options[:name]}
+          using(fetch_replication_method("#{options[:name]}"))#{options[:readonly] ? '.readonly' : ''}
+        end
+      end
+      STR
+    end
+    
+    # Builds a class within the model with the name of replication method. Use this
+    # class as the :class_name options for associations when it is nesseccary to
+    # ensure eager loading uses a replication connection.
+    # 
+    # EX:
+    # 
+    #   class Foo < ActiveRecord::Base
+    #     belongs_to :user
+    #     replicated # use default name .slaves
+    #   end
+    #   
+    #   class MyClass < ActiveRecord::Base
+    #     has_many :foos
+    #     has_many :foo_slaves, :class_name => 'Foo::Slaves'
+    #     replicated
+    #   end
+    #   
+    #   a = MyClass.include(:foo_slaves).first
+    #   a.foo_slaves => [<Foo::Slave1ConnectionDup...>,<Foo::Slave1ConnectionDup...>...]
+    def build_replication_association_class(options)
+      class_eval <<-STR
+        class #{options[:name].titleize}
           class << self
-            def model_name
-              superclass.model_name
-            end 
-            
-            def replication_class?
-              true  
+            def method_missing(name, *args)
+              #{self.name}.#{options[:name]}.klass.send(name, *args)
             end
           end
         end
-        klass.class_eval <<-STR, __FILE__, __LINE__       
-           def self.connection
-             '#{connection_class_name}'.constantize.connection
-           end
-           
-           @replication_method_name = '#{options[:name]}'
-        STR
-        
-        if options[:readonly] || connection_class_name.constantize.readonly?     
-          klass.class_eval do
-            define_method(:readonly?) do 
-              true
-            end
-          end       
-        end
-        klass.build_replication_associations(defined_associations,options[:name])
-        rep_klass = Object.const_set(child_class_name, klass)    
-      end   
-      rep_klass
-    end
-      
-    # In order to ensure a replication 
-    def add_replication_class(method_name)
-      klass_method_name = method_name.classify
-      klass_method_name = "Slave" if klass_method_name == "Slafe"
-      class_eval <<-STR, __FILE__, __LINE__       
-         class #{klass_method_name} < self
-            def self.constantize
-              super.#{method_name}
-            end
-         end
       STR
     end
-     
-    # Adds as class method to call a specific replication conneciton.
-    # Usage:
-    #   User.slave_1.where(:id => 2).first => returns results from slave_1 database
-    #   User.slave_2.where(:id => 2).first => returns results from slave_2 database
-    def build_single_replication_method(method_name)
-      self.class.instance_eval do       
-        define_method method_name.to_s do
-          replication_connections[method_name]
+       
+    # Build a query method with the name of our replicaiton method. This method 
+    # uses the relation.klass to fetch the appropriate connection, ensuring the
+    # correct connection is used even if the method is already defined by another class.
+    # We want to make sure we don't override existing methods in ActiveRecord::QueryMethods
+    def build_query_method_alias_method(replication_relation_name)
+      unless ActiveRecord::QueryMethods.instance_methods.include?(replication_relation_name.to_sym)
+        ActiveRecord::QueryMethods.module_eval do
+          define_method replication_relation_name.to_sym do
+            using(self.klass.fetch_replication_method(replication_relation_name))
+          end
         end
       end
     end
     
-    def _replication_mutex
-      @replication_mutex ||= (connection.using_em_adapter? ? EM::Synchrony::Thread::Mutex.new : Mutex.new)
-    end
-    
-    # Make sure multiple threads do not through off our shifting
-    def fetch_replication_method
-      _replication_mutex.synchronize {
-        current = @replication_methods.shift
-        @replication_methods << current
-        send(current)
-      }
-    end
-
-    # add a class method that shifts through available connections methods
-    # on each call.
-    # Usage:
-    #   User.slave.where(:id => 2).first => can return results from slave_1 or slave_2 
-    def build_replication_method(connection_methods,method_name='slaves')
-      @replication_methods = connection_methods       
-      self.class.instance_eval do            
-        define_method method_name do
-          fetch_replication_method
-        end        
-      end
-    end
-    
-    # After the replication class is defined we need to add replication_associations 
-    # should the super class be redefined else where with other associations added,
-    # think Rails engine...
-    def after_association
-      replication_connections.values.each do |rep|
-        rep.constantize.build_replication_associations(defined_associations,@replication_method_name)
-      end
+    def build_repliciation_instance_method(replication_relation_name)
+      define_method replication_relation_name.to_sym do
+        using(self.class.fetch_replication_method(replication_relation_name))
+      end 
     end
   end
 end
