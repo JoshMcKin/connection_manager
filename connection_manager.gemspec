@@ -23,4 +23,11 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'mocha'
   s.add_development_dependency 'factory_girl'
   s.add_development_dependency 'activesupport', '~> 3.0'
+  
+  if(defined? RUBY_ENGINE and 'jruby' == RUBY_ENGINE)
+    s.add_development_dependency 'jruby-openssl'
+    s.add_development_dependency 'activerecord-jdbcmysql-adapter'
+  else
+    s.add_development_dependency "mysql2"
+  end
 end
