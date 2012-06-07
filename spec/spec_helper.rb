@@ -7,7 +7,7 @@ require 'active_support'
 require 'logger'
 require 'factory_girl'
 require 'helpers/database_spec_helper'
-if(defined? RUBY_ENGINE && 'jruby' == RUBY_ENGINE)
+if(defined? RUBY_ENGINE and 'jruby' == RUBY_ENGINE)
   TestDB.connect('jdbcmysql')
 else
   TestDB.connect('mysql2')
