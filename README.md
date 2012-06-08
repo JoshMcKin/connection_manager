@@ -152,7 +152,7 @@ available slave connections each time it is called using a different connection 
 Replicated defaults to the slaves replication type,so if you have only masters and a combination
 of masters and slaves for replication, you have set the replication type to masters
 
-   class User < UserDataConnection
+    class User < UserDataConnection
         replicated #slaves replication
         replicated :type => :masters, :name => 'masters' # masters replication
     end
