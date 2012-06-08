@@ -30,7 +30,7 @@ module ConnectionManager
           dup_klass.class_eval <<-STR 
             class << self
               def model_name
-                '#{self.model_name}'
+                '#{self.name}'.constantize.model_name
               end
             end
           STR
