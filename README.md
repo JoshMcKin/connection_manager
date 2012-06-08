@@ -176,10 +176,10 @@ to your shard requirements.
 
 ## Migrations
 
-Nothing implement now to help but there are lots of potential solutions [here](http://stackoverflow.com/questions/1404620/using-rails-migration-on-different-database-than-standard-production-or-devel
+Nothing implement now to help but there are lots of potential solutions [here] (http://stackoverflow.com/questions/1404620/using-rails-migration-on-different-database-than-standard-production-or-devel)
 
 ## TODOs
-* Maybe add migration extra migration support for Rail AR implementations.
+* Maybe add migration support for Rails AR implementations.
 
 ## Other ActiveRecord Connection gems
 * [DataFabric] (https://github.com/mperham/data_fabric)
