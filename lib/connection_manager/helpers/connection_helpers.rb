@@ -90,7 +90,7 @@ module ConnectionManager
       self.abstract_class = opts[:abstract_class]
       set_to_readonly if (readonly? || opts[:readonly] || self.connection.readonly?)
       add_managed_connections(yml_key,opts[:class_name])
-      use_database(self.database_name,opts)
+      use_database(self.database_name,opts) unless self.abstract_class
     end
           
     # Override ActiveRecord::Base instance method readonly? to force 
