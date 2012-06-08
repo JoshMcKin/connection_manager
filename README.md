@@ -1,5 +1,5 @@
 # ConnectionManager
-Multi-Database and Replication and Sharding add on for ActiveRecord.
+Multi-Database, Replication and Sharding for ActiveRecord.
 
 ## Background
 ActiveRecord, for quite some time now, has supported multiple database connections 
