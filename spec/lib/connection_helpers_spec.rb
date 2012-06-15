@@ -30,10 +30,6 @@ describe ConnectionManager::ConnectionHelpers do
       it "should create abstract class" do
         MyConnectionClass.abstract_class.should be_true
       end
-  
-      it "should prefix table name with database" do
-        MyConnectionClass.table_name_prefix.should eql('cm_test.')
-      end
       
       it "should checkin the connection" do
         ActiveRecord::Base.managed_connection_classes.include?("MyConnectionClass").should be_true
