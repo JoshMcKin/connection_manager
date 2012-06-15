@@ -23,22 +23,29 @@ module ConnectionManager
       end
       
       def build_dup_class(connection_class_name)
-        dup_klass =  class_eval <<-STR
+        con_class = connection_class_name.constantize
+        dup_klass = class_eval <<-STR
              #{connection_class_name}Dup = dup              
-          STR
-          
-          dup_klass.class_eval <<-STR 
-            class << self
-              def model_name
-                '#{self.name}'.constantize.model_name
-              end
+        STR
+        dup_klass.class_eval <<-STR 
+          self.table_name = '#{table_name_for_dup(con_class)}'
+          class << self
+            def model_name
+              '#{self.name}'.constantize.model_name
             end
-          STR
+          end
+        STR
           
-          extend_dup_class(dup_klass,connection_class_name)
-          dup_klass.table_name = table_name.to_s.split('.').last
-          dup_klass.table_name_prefix =  connection_class_name.constantize.table_name_prefix
-          dup_klass
+        extend_dup_class(dup_klass,connection_class_name)
+        dup_klass
+      end
+      
+      def table_name_for_dup(con_class)
+        (con_class.database_name == database_name ) ? table_name : "#{con_class.table_name_prefix}#{table_name.split('.').last}"
+      end
+      
+      def table_name_prefix_for_dup(con_class)
+        con_class.abstract_class? ? table_name_prefix : con_class.table_name_prefix
       end
     
       # Extend the connection override module from the connetion to the supplied class

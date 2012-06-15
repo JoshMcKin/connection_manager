@@ -40,6 +40,12 @@ describe ConnectionManager::Replication do
         Fruit.replicated
         Fruit.slaves.connection.config.should_not eql(Fruit.connection.config)
       end
+      
+      it "should produce the same query string" do
+        Fruit.replicated
+        Fruit.slaves.joins(:region).to_sql.should eql(Fruit.joins(:region).to_sql)
+        Fruit.slaves.joins(:fruit_baskets).to_sql.should eql(Fruit.joins(:fruit_baskets).to_sql)
+      end
     end
     
     context "the objects return from a query" do
