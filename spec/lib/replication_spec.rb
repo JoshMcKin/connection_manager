@@ -45,6 +45,8 @@ describe ConnectionManager::Replication do
         Fruit.replicated
         Fruit.slaves.joins(:region).to_sql.should eql(Fruit.joins(:region).to_sql)
         Fruit.slaves.joins(:fruit_baskets).to_sql.should eql(Fruit.joins(:fruit_baskets).to_sql)
+        Fruit.slaves.includes(:fruit_baskets).to_sql.should eql(Fruit.includes(:fruit_baskets).to_sql)
+        Fruit.slaves.includes(:region).to_sql.should eql(Fruit.includes(:region).to_sql)
       end
     end
     
