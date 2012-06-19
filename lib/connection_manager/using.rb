@@ -24,9 +24,7 @@ module ConnectionManager
       
       def build_dup_class(connection_class_name)
         con_class = connection_class_name.constantize
-        dup_klass = class_eval <<-STR
-             #{connection_class_name}Dup = dup              
-        STR
+        dup_klass = dup              
         dup_klass.class_eval <<-STR 
           self.table_name = '#{table_name_for_dup(con_class)}'
           class << self
@@ -35,9 +33,9 @@ module ConnectionManager
             end
           end
         STR
-          
-        extend_dup_class(dup_klass,connection_class_name)
-        dup_klass
+        
+        extend_dup_class(dup_klass,connection_class_name)          
+        self.const_set("#{connection_class_name}Dup", dup_klass)
       end
       
       def table_name_for_dup(con_class)
