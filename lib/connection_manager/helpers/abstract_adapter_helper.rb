@@ -5,11 +5,11 @@ module ConnectionManager
     end
     
     def using_em_adapter?
-      (config[:adapter].match(/^em\_/) && defined?(EM) && EM::reactor_running?)
+      (@config[:adapter].match(/^em\_/) && defined?(EM) && EM::reactor_running?)
     end
     
     def readonly?
-      (config[:readonly] == true)
+      (@config[:readonly] == true)
     end 
     
     def replicated?
@@ -17,7 +17,7 @@ module ConnectionManager
     end
    
     def database_name
-      config[:database]
+      @config[:database]
     end
    
     def replication_keys(type=:slaves)
@@ -27,13 +27,13 @@ module ConnectionManager
     
     def slave_keys
       slave_keys = []
-      slave_keys = config[:slaves].collect{|r| r.to_sym} if config[:slaves]
+      slave_keys = @config[:slaves].collect{|r| r.to_sym} if @config[:slaves]
       slave_keys  
     end
     
     def master_keys
       master_keys = []
-      master_keys = config[:masters].collect{|r| r.to_sym} if config[:masters]
+      master_keys = @config[:masters].collect{|r| r.to_sym} if @config[:masters]
       master_keys
     end
   end
