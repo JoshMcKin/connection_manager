@@ -5,7 +5,7 @@ module ConnectionManager
     
     # Returns the database_name of the connection unless set otherwise
     def database_name
-      @database_name = "#{connection.database_name.to_s}" unless @database_name
+      @database_name = "#{connection.config[:database].to_s}" if @database_name.blank?
       @database_name
     end
     
