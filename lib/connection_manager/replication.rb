@@ -83,7 +83,7 @@ module ConnectionManager
     def fetch_connection_class_name(to_use) 
       connection_class_name = to_use    
       connection_class_name = fetch_connection_class_name_from_yml_key(connection_class_name) if connection_class_name.to_s.match(/_/)    
-      raise ArgumentError, "For #{self.name}, the class #{connection_class_name} could not be found." unless (managed_connection_classes.include?(connection_class_name))     
+      raise ArgumentError, "For #{self.name}, the class #{connection_class_name} could not be found." if connection_class_name.blank?    
       connection_class_name
     end
 
