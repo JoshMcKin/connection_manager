@@ -9,6 +9,10 @@ module ConnectionManager
       @database_name
     end
     
+    def database_name=database_name
+      @database_name = database_name
+    end
+    
     alias :schema_name :database_name
     
     # Returns true if this is a readonly only a readonly model
