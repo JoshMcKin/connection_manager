@@ -39,7 +39,7 @@ module ConnectionManager
       end
       
       def table_name_for_dup(con_class)
-        (con_class.database_name == database_name ) ? table_name : "#{con_class.table_name_prefix}#{table_name.split('.').last}"
+        "#{con_class.table_name_prefix}#{table_name.split('.').last}"
       end
       
       def table_name_prefix_for_dup(con_class)
