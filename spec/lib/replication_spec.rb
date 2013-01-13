@@ -51,7 +51,7 @@ describe ConnectionManager::Replication do
     end
     
     context "the objects return from a query" do
-      # The default connection is the orignal connection for the model
+      # The default connection is the original connection for the model
       it "should have the connection as the replication" do
         Fruit.replicated
         FactoryGirl.create(:fruit)
@@ -106,7 +106,7 @@ describe ConnectionManager::Replication do
       @foo.save
     end
     
-    # We'd like this to happend magically some day. Possible in 3.2
+    # We'd like this to happen magically some day. Possible in 3.2
     it "should eager load with replication instances" do
       user = User.includes(:foos).slaves.where(:id => @user.id).first
       user.foos.first.should_not be_kind_of(Foo)
