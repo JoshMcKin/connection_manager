@@ -52,6 +52,7 @@ module ConnectionManager
         klass = Class.new(ActiveRecord::Base)
         new_connection_class = Object.const_set(class_name, klass)  
         new_connection_class.establish_managed_connection(connection_key)
+        new_connection_class.table_name_prefix = "#{new_connection_class.database_name}."
       end
     end
     
