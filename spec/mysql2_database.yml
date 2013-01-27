@@ -14,7 +14,7 @@ master: &master
   password: omegared
   
 readonly: &readonly
-  username: readonly
+  username: root
   password: omegared
   
 test:

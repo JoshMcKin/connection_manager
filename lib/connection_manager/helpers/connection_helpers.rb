@@ -67,7 +67,7 @@ module ConnectionManager
       @database_name = database_name
       opts[:table_name_prefix] ||= "#{database_name}."
       opts[:table_name] ||= self.table_name.to_s.split('.').last
-      self.table_name = opts[:table_name]
+      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"
       self.table_name_prefix = opts[:table_name_prefix]
     end
     

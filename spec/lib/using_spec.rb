@@ -25,7 +25,6 @@ describe ConnectionManager::Using do
     lambda { "Fruit::CmFooSlaveConnectionDup".constantize}.should_not raise_error(NameError)
   end
 
-  
   describe '#using' do
     it "should return an ActiveRecord::Relation" do
       Fruit.using("CmFooSlaveConnection").should be_kind_of(ActiveRecord::Relation)
@@ -34,10 +33,10 @@ describe ConnectionManager::Using do
       Fruit.using("CmFooSlaveConnection").connection.config.should_not eql(Fruit.connection.config)
     end
   
-    it "should create the same sql if called from model or from relation" do
-      Fruit.where(:name => "malarky").using("CmFooSlaveConnection").to_sql.should eql(
-        Fruit.using("CmFooSlaveConnection").where(:name => "malarky").to_sql)
-    end
+    it "should create the same sql if called from model or from relation" #do
+#      Fruit.where(:name => "malarky").using("CmFooSlaveConnection").to_sql.should eql(
+#        Fruit.using("CmFooSlaveConnection").where(:name => "malarky").to_sql)
+#    end
   
     it "should have the same connection if called from model or from relation" do
       Fruit.where(:name => "malarky").using("CmFooSlaveConnection").connection.config.should eql(
@@ -62,7 +61,7 @@ describe ConnectionManager::Using do
       Fruit.using("CmMasterConnection").where(:name => f.name).first.should_not be_nil
     end
     
-    it "should save to schema/database set in connection class different" do
+    it "should save to schema/database set in connection class" do
       Fruit.table_name_prefix = "cm_test."
       f = Fruit.using("CmMasterConnection").new
       f.name = FactoryGirl.generate(:rand_name)
