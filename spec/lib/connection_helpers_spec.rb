@@ -56,13 +56,13 @@ describe ConnectionManager::ConnectionHelpers do
   
     it "should set the contactinate the schema_name and table_name; and set the table_name to that value" do
       Fruit.use_database('my_schema')
-      Fruit.table_name.should eql('fruits')
+      Fruit.table_name.should eql('my_schema.fruits')
       Fruit.table_name_prefix.should eql('my_schema.')
     end
   
     it "should set the table_name if one is supplied" do
       Fruit.use_database('my_schema',{:table_name => 'apples'})
-      Fruit.table_name.should eql('apples')
+      Fruit.table_name.should eql('my_schema.apples')
       Fruit.table_name_prefix.should eql('my_schema.')
     end
   end

@@ -9,9 +9,9 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
           sql = ["SHOW TABLES", database].compact.join(' IN ')
           execute(sql, 'SCHEMA').collect do |field|
             field.first
-          end
         end
-      
+        end
+        
         def table_exists?(name)
           return true if super
           name          = name.to_s
@@ -24,5 +24,5 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0
         end
       end
     end
-  end
+  end 
 end
