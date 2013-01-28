@@ -174,6 +174,24 @@ to your shard requirements.
     # Calls the supplied block on all the shards available to User, including the User model itself.
     User.shards{ |shard| shard.where(:user_name => "some_user").all} => [<User ...>,<LegacyUser ...>]
 
+## Caching
+
+ActiveRecord only caches queries for the ActiveRecord::Base connection. Inorder to cache queries that
+originate from classes that used establish_connection you must surround your code with a cache block:
+
+    MyOtherConnectionClass.cache {
+      Some queries...
+    }
+
+In Rails for less complicated schemas you could simply create an around filter for your controllers
+
+    class ApplicationController < ActionController::Base
+      around_filter :cache_slaves
+      private
+      def cache_slaves
+        MyOnlySlaveConnection.cache { yield }
+      end
+
 ## Migrations
 
 Nothing implement now to help but there are lots of potential solutions [here] (http://stackoverflow.com/questions/1404620/using-rails-migration-on-different-database-than-standard-production-or-devel)
