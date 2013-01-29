@@ -68,7 +68,7 @@ module ConnectionManager
     #     LegacyUser.limit(1).to_sql => "SELECT * FROM `BDUser`.`UserData` LIMIT 1
     #
     def use_database(database_name,opts={})
-      @database_name = database_name
+      self.database_name = database_name
       opts[:table_name_prefix] ||= "#{database_name}."
       opts[:table_name] ||= self.table_name
       opts[:table_name] = opts[:table_name].to_s.split('.').last
