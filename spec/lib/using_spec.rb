@@ -8,18 +8,6 @@ end
 
 describe ConnectionManager::Using do
   
-  it "should add module to provided class" do
-    Fruit.send(:build_connection_override_module,"CmFooSlaveConnection")
-    lambda { "CmFooSlaveConnection::ConnectionOverrideMod".constantize}.should_not raise_error(NameError)
-  end
-  
-  it "should extend to module to the supplied class" do
-    Fruit.send(:build_connection_override_module,"CmFooSlaveConnection")
-    d = Fruit.dup
-    d.send(:extend_dup_class,d,"CmFooSlaveConnection")
-    d.connection.config.should_not eql(Fruit.connection.config)
-  end
-  
   it "should add sub class to current class with the name of the connection" do
     Fruit.send(:fetch_duplicate_class,"CmFooSlaveConnection")
     lambda { "Fruit::CmFooSlaveConnectionDup".constantize}.should_not raise_error(NameError)
@@ -33,7 +21,7 @@ describe ConnectionManager::Using do
       Fruit.using("CmFooSlaveConnection").connection.config.should_not eql(Fruit.connection.config)
     end
   
-    it "should create the same sql if called from model or from relation" #do
+    it "should create the exact same sql if called from model or from relation" #do
 #      Fruit.where(:name => "malarky").using("CmFooSlaveConnection").to_sql.should eql(
 #        Fruit.using("CmFooSlaveConnection").where(:name => "malarky").to_sql)
 #    end
