@@ -41,14 +41,7 @@ module ConnectionManager
       options = {:name => "slaves"}.merge!(connections.extract_options!)
       options[:type] ||= :slaves
       options[:build_replicants] = true if (options[:build_replicants].blank? && options[:type] == :masters)
-      if options[:using]
-        connections = options[:using] 
-        warn "[DEPRECATION] :using option is deprecated.  Please list replication connections instead. EX: replicated :slave_connection,'OtherSlaveConnectionChild', :name => 'my_slaves'."
-      end
-      
-      # Just incase its blank. Should be formally set by using connection class or at the model manually
-      self.table_name_prefix = "#{database_name}." if self.table_name_prefix.blank?
-      
+      self.use_database(self.database_name,{:table_name => self.table_name})
       connections = connection.replication_keys(options[:type]) if connections.blank?
       set_replications_to_method(connections,options[:name])
       build_repliciation_class_method(options)
@@ -58,9 +51,7 @@ module ConnectionManager
       options[:name]
     end
       
-    
-    # Get a connection class name from out replication_methods pool
-    # could add mutex but not sure blocking is with it.
+    # Get a connection class name from out replication_methods pool.
     def fetch_replication_method(method_name)
       available_connections = @replication_methods[method_name]
       raise ArgumentError, "No connections found for #{method_name}." if available_connections.blank?
