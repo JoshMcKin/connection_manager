@@ -11,7 +11,7 @@ module ConnectionManager
       "development"
     end
     
-    # Grab only thoses connections that correspond to the current env. If env
+    # Grab only those connections that correspond to the current env. If env
     # is blank it grabs all the connection keys
     # 
     # If you current environment valid database keys can be:
@@ -27,7 +27,7 @@ module ConnectionManager
       ActiveRecord::Base.configurations[name_from_yml].symbolize_keys if found
     end
         
-    # Returns currently loaded configuations where :build_connection is true
+    # Returns currently loaded configurations where :build_connection is true
     def database_keys_for_auto_build
       ab_configs = []
       configuration_keys.each do |key|    
@@ -71,7 +71,7 @@ module ConnectionManager
     end
       
     # Given an connection key name from the database.yml, returns the string 
-    # equivelent of the class name for that entry.
+    # equivalent of the class name for that entry.
     def connection_class_name(name_from_yml)
       new_class_name = clean_yml_key(name_from_yml)
       new_class_name = new_class_name.gsub(/\_/,' ').titleize.gsub(/ /,'')

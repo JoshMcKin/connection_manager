@@ -3,7 +3,7 @@ module ConnectionManager
   module Replication 
     
     # Replication methods (replication_method_name, which is the option[:name] for the
-    # #replication method) and all thier associated connections. The key is the
+    # #replication method) and all their associated connections. The key is the
     # replication_method_name and the value is an array of all the replication_classes
     # the replication_method has access to.
     # 
@@ -112,7 +112,7 @@ module ConnectionManager
     end
     
     # Builds a class within the model with the name of replication method. Use this
-    # class as the :class_name options for associations when it is nesseccary to
+    # class as the :class_name options for associations when it is necessary to
     # ensure eager loading uses a replication connection.
     # 
     # EX:
@@ -142,7 +142,7 @@ module ConnectionManager
       STR
     end
        
-    # Build a query method with the name of our replicaiton method. This method 
+    # Build a query method with the name of our replication method. This method 
     # uses the relation.klass to fetch the appropriate connection, ensuring the
     # correct connection is used even if the method is already defined by another class.
     # We want to make sure we don't override existing methods in ActiveRecord::QueryMethods

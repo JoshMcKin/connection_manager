@@ -32,9 +32,7 @@ module ConnectionManager
         db_name = con_class.database_name
         dup_klass = dup              
         dup_klass.class_eval <<-STR 
-          self.database_name = '#{db_name}'
-          self.table_name_prefix = '#{db_name}.'
-          self.table_name = '#{db_name}.#{table_name.split('.').last}'
+          self.use_database('#{db_name}',{:table_name => '#{table_name}'})
           class << self
             def model_name
               #{self.name}.model_name
