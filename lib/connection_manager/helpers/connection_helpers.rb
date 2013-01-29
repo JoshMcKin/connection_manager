@@ -8,12 +8,16 @@ module ConnectionManager
       @database_name = "#{connection.config[:database].to_s}" if @database_name.blank?
       @database_name
     end
+    alias :schema_name :database_name
     
+    # Sometimes we need to manually set the database name, like when the connection
+    # has a database but our table is in a different database/schema but on the
+    # same DMS.
     def database_name=database_name
       @database_name = database_name
     end
+    alias :schema_name= :database_name=
     
-    alias :schema_name :database_name
     
     # Returns true if this is a readonly only a readonly model
     # If the connection.readonly? then the model that uses the connection 
@@ -66,11 +70,11 @@ module ConnectionManager
     def use_database(database_name,opts={})
       @database_name = database_name
       opts[:table_name_prefix] ||= "#{database_name}."
-      opts[:table_name] ||= self.table_name.to_s.split('.').last
+      opts[:table_name] ||= self.table_name
+      opts[:table_name] = opts[:table_name].to_s.split('.').last
       self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"
       self.table_name_prefix = opts[:table_name_prefix]
     end
-    
     alias :use_schema :use_database
    
     # Establishes and checks in a connection, noramlly for abstract classes aka connection classes.
