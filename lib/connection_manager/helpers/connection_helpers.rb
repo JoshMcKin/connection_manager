@@ -56,7 +56,7 @@ module ConnectionManager
     # 
     # Options:
     # * :table_name_prefix - the prefix required for making cross database/schema
-    # joins for you database managmenet system. By default table_name_prefix is the
+    # joins for you database management system. By default table_name_prefix is the
     # database/schema name followed by a period EX: "my_database."
     # * :table_name - the table name for the model if it does not match ActiveRecord
     # naming conventions
@@ -72,17 +72,17 @@ module ConnectionManager
       opts[:table_name_prefix] ||= "#{database_name}."
       opts[:table_name] ||= self.table_name
       opts[:table_name] = opts[:table_name].to_s.split('.').last
-      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"
       self.table_name_prefix = opts[:table_name_prefix]
+      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless self.abstract_class?
     end
     alias :use_schema :use_database
    
-    # Establishes and checks in a connection, noramlly for abstract classes aka connection classes.
+    # Establishes and checks in a connection, normally for abstract classes AKA connection classes.
     # 
     # Options:
     # * :abstract_class - used the set #abstract_class, default is true
     # * :readonly - force all instances to readonly
-    # * :class_name - name of connection class name, default is current class's name
+    # * :class_name - name of connection class name, default is current class name
     # * :table_name_prefix - prefix to append to table name for cross database joins,
     #     default is the "#{self.database_name}."
     # EX:
