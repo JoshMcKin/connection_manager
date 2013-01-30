@@ -1,7 +1,6 @@
 require 'active_support/core_ext/hash/indifferent_access'
 module ConnectionManager
   module Replication 
-    
     # Replication methods (replication_method_name, which is the option[:name] for the
     # #replication method) and all their associated connections. The key is the
     # replication_method_name and the value is an array of all the replication_classes
@@ -34,21 +33,19 @@ module ConnectionManager
     # * :name - name of class method to call to access replication, default to slaves
     # * :readonly - forces all results to readonly
     # * :type - the type of replication; :slave or :master, defaults to :slave
-    # * :using - list of connections to use; can be database.yml key or the name of the connection class --- DEPRECIATED
-    # * A Block may be passed that will be called on each of the newly created child classes  
     def replicated(*connections)
-      @replicated = true
-      options = {:name => "slaves"}.merge!(connections.extract_options!)
-      options[:type] ||= :slaves
-      options[:build_replicants] = true if (options[:build_replicants].blank? && options[:type] == :masters)
-      self.use_database(self.database_name,{:table_name => self.table_name})
-      connections = connection.replication_keys(options[:type]) if connections.blank?
-      set_replications_to_method(connections,options[:name])
-      build_repliciation_class_method(options)
-      build_replication_association_class(options)
-      build_query_method_alias_method(options[:name])
-      build_repliciation_instance_method(options[:name])
-      options[:name]
+        @replicated = true
+        options = {:name => "slaves"}.merge!(connections.extract_options!)
+        options[:type] ||= :slaves
+        options[:build_replicants] = true if (options[:build_replicants].blank? && options[:type] == :masters)
+        self.use_database(self.database_name,{:table_name => self.table_name}) if self.connection.cross_database_support?
+        connections = connection.replication_keys(options[:type]) if connections.blank?
+        set_replications_to_method(connections,options[:name])
+        build_repliciation_class_method(options)
+        build_replication_association_class(options)
+        build_query_method_alias_method(options[:name])
+        build_repliciation_instance_method(options[:name])
+        options[:name]
     end
       
     # Get a connection class name from out replication_methods pool.

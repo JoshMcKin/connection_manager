@@ -2,7 +2,6 @@ require 'active_support/core_ext/hash/indifferent_access'
 module ConnectionManager
   module ConnectionHelpers       
     @@managed_connections = HashWithIndifferentAccess.new
-    
     # Returns the database_name of the connection unless set otherwise
     def database_name
       @database_name = "#{connection.config[:database].to_s}" if @database_name.blank?
@@ -17,7 +16,6 @@ module ConnectionManager
       @database_name = database_name
     end
     alias :schema_name= :database_name=
-    
     
     # Returns true if this is a readonly only a readonly model
     # If the connection.readonly? then the model that uses the connection 
@@ -69,14 +67,14 @@ module ConnectionManager
     #
     def use_database(database_name,opts={})
       self.database_name = database_name
-      opts[:table_name_prefix] ||= "#{database_name}."
-      opts[:table_name] ||= self.table_name
-      opts[:table_name] = opts[:table_name].to_s.split('.').last
-      self.table_name_prefix = opts[:table_name_prefix]
-      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless self.abstract_class?
+      opts[:table_name_prefix] ||= "#{database_name}." if self.connection.cross_database_support?
+      self.table_name_prefix = opts[:table_name_prefix] unless opts[:table_name_prefix].blank?
+      opts[:table_name] ||= self.table_name 
+      opts[:table_name] = opts[:table_name].to_s.split('.').last if self.connection.cross_database_support?
+      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless self.abstract_class? || opts[:table_name].blank?
     end
     alias :use_schema :use_database
-   
+ 
     # Establishes and checks in a connection, normally for abstract classes AKA connection classes.
     # 
     # Options:
@@ -98,7 +96,7 @@ module ConnectionManager
       self.abstract_class = opts[:abstract_class]
       set_to_readonly if (readonly? || opts[:readonly] || self.connection.readonly?)
       add_managed_connections(yml_key,opts[:class_name])
-      use_database(self.database_name,opts) unless self.abstract_class
+      use_database(self.database_name,opts)
     end
           
     # Override ActiveRecord::Base instance method readonly? to force 

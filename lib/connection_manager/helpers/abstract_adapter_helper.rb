@@ -4,6 +4,12 @@ module ConnectionManager
       @config
     end
     
+    # Determines if connection supports cross database queries
+    def cross_database_support?
+     (@config[:cross_database_support] || @config[:adapter].match(/(mysql)|(postgres)|(sqlserver)/i)) 
+    end
+    alias :cross_schema_support? :cross_database_support?
+    
     def using_em_adapter?
       (@config[:adapter].match(/^em\_/) && defined?(EM) && EM::reactor_running?)
     end
