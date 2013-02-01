@@ -2,20 +2,6 @@ require 'active_support/core_ext/hash/indifferent_access'
 module ConnectionManager
   module ConnectionHelpers       
     @@managed_connections = HashWithIndifferentAccess.new
-    # Returns the database_name of the connection unless set otherwise
-    def database_name
-      @database_name = "#{connection.config[:database].to_s}" if @database_name.blank?
-      @database_name
-    end
-    alias :schema_name :database_name
-    
-    # Sometimes we need to manually set the database name, like when the connection
-    # has a database but our table is in a different database/schema but on the
-    # same DMS.
-    def database_name=database_name
-      @database_name = database_name
-    end
-    alias :schema_name= :database_name=
     
     # Returns true if this is a readonly only a readonly model
     # If the connection.readonly? then the model that uses the connection 
