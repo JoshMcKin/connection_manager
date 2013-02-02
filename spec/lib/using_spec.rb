@@ -22,9 +22,9 @@ describe ConnectionManager::Using do
     end
   
     it "should create the exact same sql if called from model or from relation" #do
-#      Fruit.where(:name => "malarky").using("CmFooSlaveConnection").to_sql.should eql(
-#        Fruit.using("CmFooSlaveConnection").where(:name => "malarky").to_sql)
-#    end
+      #Fruit.where(:name => "malarky").using("CmFooSlaveConnection").to_sql.should eql(
+        #Fruit.using("CmFooSlaveConnection").where(:name => "malarky").to_sql)
+    #end
   
     it "should have the same connection if called from model or from relation" do
       Fruit.where(:name => "malarky").using("CmFooSlaveConnection").connection.config.should eql(
