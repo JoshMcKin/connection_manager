@@ -38,7 +38,7 @@ module ConnectionManager
         options = {:name => "slaves"}.merge!(connections.extract_options!)
         options[:type] ||= :slaves
         options[:build_replicants] = true if (options[:build_replicants].blank? && options[:type] == :masters)
-        self.use_database(self.database_name,{:table_name => self.table_name}) if self.connection.cross_database_support?
+        use_database(current_database_name, :table_name => table_name) # make sure the base class has current_database_name set
         connections = connection.replication_keys(options[:type]) if connections.blank?
         set_replications_to_method(connections,options[:name])
         build_repliciation_class_method(options)

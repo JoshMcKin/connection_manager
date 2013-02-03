@@ -28,8 +28,9 @@ module ConnectionManager
       # return the connection class as AR sometimes uses the the superclass
       # connection
       def build_dup_class(connection_class_name)
+        use_database(self.current_database_name) # make sure we are consistent from super to dup
         con_class = connection_class_name.constantize
-        db_name = con_class.database_name
+        db_name = con_class.current_database_name
         dup_klass = dup              
         dup_klass.class_eval <<-STR 
           self.use_database('#{db_name}',{:table_name => '#{table_name}'})

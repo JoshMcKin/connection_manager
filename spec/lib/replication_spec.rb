@@ -3,7 +3,7 @@ describe ConnectionManager::Replication do
   
   describe '#database_name' do
     it "should return the name of the database the model is using" do
-      Fruit.database_name.should eql('cm_test')
+      Fruit.current_database_name.should eql('cm_test')
     end
   end
 
@@ -108,9 +108,9 @@ describe ConnectionManager::Replication do
     
     # We'd like this to happen magically some day. Possible in 3.2
     it "should eager load with replication instances" #do
-      #user = User.slaves.includes(:foos).where(:id => @user.id).first
-      #user.foos.first.should_not be_kind_of(Foo)
-    #end
+#      user = User.slaves.includes(:foos).where(:id => @user.id).first
+#      user.foos.first.should_not be_kind_of(Foo)
+#    end
     
     context "specifically defined replication association" do
       it "should eager load with replication instances" do

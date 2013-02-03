@@ -51,7 +51,7 @@ describe ConnectionManager::ConnectionHelpers do
   describe '#use_database' do
     it "should set the database/schema for the model to the supplied schema_name" do
       Fruit.use_database('my_schema')
-      Fruit.database_name.should eql('my_schema')
+      Fruit.current_database_name.should eql('my_schema')
     end
   
     it "should set the contactinate the schema_name and table_name; and set the table_name to that value" do
