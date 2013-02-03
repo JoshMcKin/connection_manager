@@ -32,7 +32,7 @@ module ConnectionManager
         con_class = connection_class_name.constantize
         db_name = con_class.current_database_name
         dup_klass = dup              
-        dup_klass.class_eval <<-STR 
+        dup_klass.class_eval <<-STR
           self.use_database('#{db_name}',{:table_name => '#{table_name}'})
           class << self
             def model_name
@@ -51,6 +51,7 @@ module ConnectionManager
         STR
         
         self.const_set("#{connection_class_name}Dup", dup_klass)
+        "#{self.name}::#{connection_class_name}Dup".constantize
       end
     end
     
@@ -69,7 +70,7 @@ module ConnectionManager
       d = klass.using(connection_class_name)
       relation = clone
       relation.instance_variable_set(:@klass, d.klass)
-      relation
+      relation.from(d.quoted_table_name)
     end
   end
 end

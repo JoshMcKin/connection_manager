@@ -26,4 +26,3 @@ describe ConnectionManager::ConnectionBuilder do
     end
   end   
 end
-
