@@ -36,27 +36,5 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 2
         end
       end
     end
-  end 
-end
-
-# We need to make sure we override existing database_name name methods
-module ActiveRecord
-  class Base
-    class << self
-      # Returns the database_name of the connection unless set otherwise
-      def database_name
-        @database_name = "#{connection.config[:database].to_s}" if @database_name.blank?
-        @database_name
-      end
-      alias :schema_name :database_name
-    
-      # Sometimes we need to manually set the database name, like when the connection
-      # has a database but our table is in a different database/schema but on the
-      # same DMS.
-      def database_name=database_name
-        @database_name = database_name
-      end
-      alias :schema_name= :database_name=
-    end
   end
 end

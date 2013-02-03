@@ -3,6 +3,26 @@ module ConnectionManager
   module ConnectionHelpers       
     @@managed_connections = HashWithIndifferentAccess.new
     
+    # Returns the database_name of the connection unless set otherwise
+    def current_database_name
+      return "#{connection.config[:database].to_s}" if @current_database_name.blank?
+      @current_database_name
+    end
+    alias :database_name :current_database_name
+    alias :current_schema_name :current_database_name
+    alias :schema_name :current_database_name
+    
+    
+    # Sometimes we need to manually set the database name, like when the connection
+    # has a database but our table is in a different database/schema but on the
+    # same DMS.
+    def current_database_name=current_database_name
+      @current_database_name= current_database_name
+    end
+    alias :database_name= :current_database_name=
+    alias :current_schema_name= :current_database_name=
+    alias :schema_name= :current_database_name=
+    
     # Returns true if this is a readonly only a readonly model
     # If the connection.readonly? then the model that uses the connection 
     # must be readonly.
@@ -51,16 +71,16 @@ module ConnectionManager
     #     
     #     LegacyUser.limit(1).to_sql => "SELECT * FROM `BDUser`.`UserData` LIMIT 1
     #
-    def use_database(database_name,opts={})
-      self.database_name = database_name
-      opts[:table_name_prefix] ||= "#{database_name}." if self.connection.cross_database_support?
+    def use_database(database_name=nil,opts={})
+      self.current_database_name = database_name if database_name
+      opts[:table_name_prefix] ||= "#{self.current_database_name}." if self.connection.cross_database_support?
       self.table_name_prefix = opts[:table_name_prefix] unless opts[:table_name_prefix].blank?
       opts[:table_name] ||= self.table_name 
       opts[:table_name] = opts[:table_name].to_s.split('.').last if self.connection.cross_database_support?
       self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless self.abstract_class? || opts[:table_name].blank?
     end
     alias :use_schema :use_database
- 
+   
     # Establishes and checks in a connection, normally for abstract classes AKA connection classes.
     # 
     # Options:
@@ -82,7 +102,7 @@ module ConnectionManager
       self.abstract_class = opts[:abstract_class]
       set_to_readonly if (readonly? || opts[:readonly] || self.connection.readonly?)
       add_managed_connections(yml_key,opts[:class_name])
-      use_database(self.database_name,opts)
+      use_database(self.current_database_name,opts)
     end
           
     # Override ActiveRecord::Base instance method readonly? to force 
