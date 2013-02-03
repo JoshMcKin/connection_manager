@@ -75,9 +75,11 @@ module ConnectionManager
       self.current_database_name = database_name if database_name
       opts[:table_name_prefix] ||= "#{self.current_database_name}." if self.connection.cross_database_support?
       self.table_name_prefix = opts[:table_name_prefix] unless opts[:table_name_prefix].blank?
-      opts[:table_name] ||= self.table_name 
-      opts[:table_name] = opts[:table_name].to_s.split('.').last if self.connection.cross_database_support?
-      self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless self.abstract_class? || opts[:table_name].blank?
+      unless self.abstract_class?
+        opts[:table_name] ||= self.table_name 
+        opts[:table_name] = opts[:table_name].to_s.split('.').last if self.connection.cross_database_support?
+        self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}" unless opts[:table_name].blank?
+      end
     end
     alias :use_schema :use_database
    
