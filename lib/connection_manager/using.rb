@@ -6,7 +6,7 @@ module ConnectionManager
         d = fetch_duplicate_class(connection_class_name)
         r = ActiveRecord::Relation.new(d, d.arel_table)
         r = r.readonly if d.connection.readonly?
-        r
+        r.from(d.quoted_table_name)
       end
         
       private       
