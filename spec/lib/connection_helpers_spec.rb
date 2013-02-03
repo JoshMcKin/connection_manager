@@ -16,6 +16,11 @@ describe ConnectionManager::ConnectionHelpers do
         }, {:readonly => true})
     end
     
+    class MyPrefixedConnection < MyConnectionClass
+      self.abstract_class = true
+      self.use_database("boo")
+    end
+    
     class MyFoo < MyConnectionClass
       self.table_name = 'foos'
     end
@@ -65,6 +70,10 @@ describe ConnectionManager::ConnectionHelpers do
       Fruit.table_name.should eql('my_schema.apples')
       Fruit.table_name_prefix.should eql('my_schema.')
     end
+  end
+  
+  it "should have the correct database name" do
+    MyPrefixedConnection.current_database_name.should eql('boo')
   end
 end
 
