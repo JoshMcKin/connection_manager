@@ -6,7 +6,8 @@ module ConnectionManager
         d = fetch_duplicate_class(connection_class_name)
         r = ActiveRecord::Relation.new(d, d.arel_table)
         r = r.readonly if d.connection.readonly?
-        r.from(d.quoted_table_name)
+        r = r.from(d.quoted_table_name) unless (ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0)
+        r
       end
         
       private       
@@ -70,7 +71,8 @@ module ConnectionManager
       d = klass.using(connection_class_name)
       relation = clone
       relation.instance_variable_set(:@klass, d.klass)
-      relation.from(d.quoted_table_name)
+      relation = relation.from(d.quoted_table_name) unless (ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 0)
+      relation
     end
   end
 end
