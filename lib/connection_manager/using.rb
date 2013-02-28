@@ -25,7 +25,8 @@ module ConnectionManager
       
       # Modifies the dup class to use the connection class connection.
       # We want to use the current class table name, but the connection
-      # class database as the prefix. We also want the superclass method to 
+      # class database as the prefix, useful when shards but normally 
+      # should be the same. We also want the superclass method to 
       # return the connection class as AR sometimes uses the the superclass
       # connection
       def build_dup_class(connection_class_name)

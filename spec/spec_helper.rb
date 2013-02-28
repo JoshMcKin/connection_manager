@@ -20,11 +20,11 @@ RSpec.configure do |config|
   config.mock_with :mocha 
   # Loads database.yml and establishes primary connection
   # Create tables when tests are completed
-  config.before(:all) {
+  config.before(:suite) {
     require 'helpers/models_spec_helper.rb'    
   }  
   # Drops tables when tests are completed
-  config.after(:all){
+  config.after(:suite){
     TestDB.clean
   } 
   # Make sure every test is isolated.
