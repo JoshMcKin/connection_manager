@@ -23,18 +23,18 @@ describe ConnectionManager::Shards do
       
     it "should not matter how the where statement is formated" do
       fruit = FactoryGirl.create(:fruit)
-      a = Fruit.shards do |shard|
+      afruit = Fruit.shards do |shard|
         shard.where(:id => fruit.id).first
       end
-      b = Fruit.shards do |shard|
+      
+      bfruit = Fruit.shards do |shard|
         shard.where(['id = ?', fruit.id]).first
       end
         
-      c = Fruit.shards do |shard|
+      cfruit = Fruit.shards do |shard|
         shard.where('id = ?', fruit.id).first    
       end
-        
-      (a == b && b == c).should be_true
+      (afruit == bfruit && bfruit == cfruit).should be_true
     end
   end
 end
