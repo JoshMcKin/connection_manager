@@ -24,7 +24,7 @@ ConnectionManager is available through [Rubygems](https://rubygems.org/gems/conn
 
     $ gem install connection_manager
 
-## Rails 3 setup (No Rails 2 at this time)
+## Rails 3/4 setup (No Rails 2 at this time)
 
 Add connection_manager to you gemfile:
     

@@ -5,12 +5,12 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 2
   module ActiveRecord
     module ConnectionAdapters
       class Mysql2Adapter < ((ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR == 2) ? AbstractMysqlAdapter : AbstractAdapter)
-        
+
         # Force all tables to be cached for the life connection
         def cached_tables
           @cached_tables ||= {}
         end
-        
+
         def tables(name = nil, database = nil, like =nil)
           return cached_tables[database] if cached_tables[database] && like.nil?
           cached_tables[database] ||= []
@@ -21,9 +21,9 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 2
           result = execute(sql, 'SCHEMA')
           cached_tables[database] = (cached_tables[database] | result.collect { |field| field[0] }).compact
         end
-        
+
         alias :new_tables :tables
-        
+
         def table_exists?(name)
           return false unless name
           name          = name.to_s

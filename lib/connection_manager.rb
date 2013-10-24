@@ -10,6 +10,8 @@ module ConnectionManager
   require 'connection_manager/shards'  
   require 'connection_manager/replication'
   require 'connection_manager/patches/cross_schema_patch'
+  require 'connection_manager/patches/reflections_patch'
+  require 'connection_manager/patches/query_methods_patch'
   require 'connection_manager/connection_manager_railtie' if defined?(Rails)
     
   ActiveRecord::ConnectionAdapters::AbstractAdapter.send(:include,(ConnectionManager::AbstractAdapterHelper))

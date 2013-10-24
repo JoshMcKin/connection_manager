@@ -10,7 +10,7 @@ describe ConnectionManager::Using do
   
   it "should add sub class to current class with the name of the connection" do
     Fruit.send(:fetch_duplicate_class,"CmFooSlaveConnection")
-    lambda { "Fruit::CmFooSlaveConnectionDup".constantize}.should_not raise_error(NameError)
+    lambda { "Fruit::CmFooSlaveConnectionDup".constantize}.should_not raise_error
   end
 
   describe '#using' do
