@@ -17,12 +17,12 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
-  s.add_runtime_dependency 'activerecord', '~> 4.0.0', '>= 3.0'
+  s.add_runtime_dependency 'activerecord', '>= 3.0', '<= 4.0'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'autotest'
   s.add_development_dependency 'mocha'
   s.add_development_dependency 'factory_girl'
-  s.add_development_dependency 'activesupport', '~> 4.0.0', '>= 3.0'
+  s.add_development_dependency 'activesupport', '>= 3.0', '<= 4.0'
   
   if(defined? RUBY_ENGINE and 'jruby' == RUBY_ENGINE)
     s.add_development_dependency 'jruby-openssl'
