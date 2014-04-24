@@ -1,3 +1,4 @@
+require 'active_support/core_ext/module/delegation'
 module ConnectionManager
   module Using
     module ClassMethods
@@ -59,10 +60,11 @@ module ConnectionManager
     end
   end
 end
+
 module ActiveRecord
   # = Active Record Relation
   class Relation
-    if ActiveRecord::VERSION::MAJOR == 4
+   if ActiveRecord::VERSION::MAJOR == 4
       def using(connection_class_name)
         d = @klass.fetch_duplicate_class(connection_class_name)
         self.instance_variable_set(:@arel_table, d.arel_table)
