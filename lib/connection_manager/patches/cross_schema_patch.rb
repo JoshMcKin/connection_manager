@@ -1,17 +1,20 @@
 module ActiveRecord
   class Base
     class << self
-      unless ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
-        # We want to make sure we get the full table name with schema
-        def arel_table # :nodoc:
+      # We want to make sure we get the full table name with schema
+      def arel_table # :nodoc:
+        begin
           @arel_table ||= Arel::Table.new(quoted_table_name.to_s.gsub('`',''), arel_engine)
+        rescue ActiveRecord::ConnectionNotEstablished
+          Arel::Table.new(table_name, arel_engine)
         end
       end
 
       private
-      alias :base_compute_table_name :compute_table_name
+      
       # In a schema schema environment we want to set table name prefix
       # to the schema_name + . if its not set already
+      alias :base_compute_table_name :compute_table_name
       def compute_table_name
         result = base_compute_table_name
         if result.match(/^[^.]*$/) && connection.cross_schema_support?
