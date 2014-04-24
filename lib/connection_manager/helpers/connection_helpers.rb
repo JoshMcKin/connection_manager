@@ -74,7 +74,7 @@ module ConnectionManager
     def use_database(database_name=nil,opts={})
       self.current_database_name = database_name if database_name
       opts[:table_name_prefix] = "#{self.current_database_name}." if opts[:table_name_prefix].blank? && self.connection.cross_database_support?
-      unless self.abstract_class?
+      unless self.abstract_class? || self.name == "ActiveRecord::Base"
         opts[:table_name] = self.table_name if opts[:table_name].blank?
         opts[:table_name].gsub!(self.table_name_prefix,'') unless self.table_name_prefix.blank?
         self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"

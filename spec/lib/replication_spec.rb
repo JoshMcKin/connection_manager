@@ -68,11 +68,10 @@ describe ConnectionManager::Replication do
     end
 
     context "the objects return from a query" do
-      # The default connection is the original connection for the model
-      it "should have the connection as the replication" do
+      it "should not have the same connection as the master class" do
         Fruit.replicated
         FactoryGirl.create(:fruit)
-        Fruit.slaves.first.connection.config.should eql(Fruit.slaves.connection.config)
+        Fruit.slaves.connection.config.should_not eql(Fruit.connection.config)
         Fruit.slaves.first.should_not be_nil
       end
     end

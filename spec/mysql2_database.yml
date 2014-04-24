@@ -39,11 +39,6 @@ slave_2_cm_test:
   <<: *readonly
   database: cm_test
 
-master_2_cm_test:
-  <<: *common
-  <<: *master
-  database: cm_master_2_test
-  
 shard_1_cm_test:  
    <<: *common
    <<: *master
