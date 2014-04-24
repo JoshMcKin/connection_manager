@@ -1,9 +1,11 @@
 module ActiveRecord
   class Base
     class << self
-      # We want to make sure we get the full table name with schema
-      def arel_table # :nodoc:
-        @arel_table ||= Arel::Table.new(quoted_table_name.to_s.gsub('`',''), arel_engine)
+      unless ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
+        # We want to make sure we get the full table name with schema
+        def arel_table # :nodoc:
+          @arel_table ||= Arel::Table.new(quoted_table_name.to_s.gsub('`',''), arel_engine)
+        end
       end
 
       private
@@ -48,8 +50,6 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
         # We have to clean the name of '`' and fetch table name with schema
         def table_exists?(name)
           return false unless name
-          name = fetch_full_table_name(name.to_s.gsub('`',''))
-
           name          = name.to_s
           schema, table = name.split('.', 2)
           unless table # A table was provided without a schema
@@ -62,4 +62,3 @@ if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
     end
   end
 end
-
