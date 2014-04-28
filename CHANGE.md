@@ -3,6 +3,10 @@ ConnectionManager Changelog
 
 HEAD
 =======
+- None yet!
+
+1.0.4
+=======
 - Stop duping classes for using, use proxy that returns instance of Class query is called on.
 
 1.0.3
