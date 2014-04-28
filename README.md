@@ -11,20 +11,13 @@ for multiple database support in Rails with a few class methods and simple
 database.yml configuration. Since ConnectionManager does not alter
 ActiveRecord's connection pool, thread safety is not a concern.
 
-## Upgrading to 0.3
-
-0.3 is a complete overhaul and will cause compatibility issues for folks who upgrade using the previous replication setup.
-Fortunately, for most folks the only change they have to do is specify the their slaves
-and masters in the database.yml and set build_connection_class to true to have
-ActiveRecord build their connection classes. See the example database.yml below.
-
 ## Installation
 
 ConnectionManager is available through [Rubygems](https://rubygems.org/gems/connection_manager) and can be installed via:
 
     $ gem install connection_manager
 
-## Rails 3/4 setup (No Rails 2 at this time)
+## Rails 3/4 setup
 
 Add connection_manager to you gemfile:
     
@@ -176,7 +169,7 @@ to your shard requirements.
 
 ## Caching
 
-ActiveRecord only caches queries for the ActiveRecord::Base connection. Inorder to cache queries that
+ActiveRecord only caches queries for the ActiveRecord::Base connection. In order to cache queries that
 originate from classes that used establish_connection you must surround your code with a cache block:
 
     MyOtherConnectionClass.cache {
