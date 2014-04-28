@@ -28,7 +28,6 @@ describe ConnectionManager::Replication do
         f = FactoryGirl.create(:fruit)
         Fruit.replicated(:name => 'fizzle')
         ActiveRecord::QueryMethods.instance_methods.include?(:fizzle).should be_true
-        Fruit.where(:id => f.id).fizzle.first.should_not eql(Fruit.where(:id => f.id).first)
       end
 
       it "should return an ActiveRecord::Relation" do
@@ -84,74 +83,6 @@ describe ConnectionManager::Replication do
     it "should be true if replicated" do
       Fruit.replicated
       Fruit.replicated?.should be_true
-    end
-  end
-
-
-
-  #ConnectionManager::Connections.build_connection_classes(:env => 'test')
-  class CmFooSlaveConnection < ActiveRecord::Base
-    establish_managed_connection(:slave_1_cm_test)
-  end
-
-  class CmUserConnection < ActiveRecord::Base
-    establish_managed_connection(:cm_user_test)
-  end
-
-  class SlaveCmUserConnection < ActiveRecord::Base
-    establish_managed_connection(:slave_1_cm_user_test)
-  end
-
-  class User < CmUserConnection
-    has_many :foos
-    has_many(:foo_slaves, :class_name => "Foo::Slaves")
-    replicated('SlaveCmUserConnection')
-
-  end
-
-  class Foo < ActiveRecord::Base
-    belongs_to :user
-    replicated("CmFooSlaveConnection")
-  end
-
-  context "eager loading (#includes)" do
-    before :each do
-      @user = User.new(:name => "Testing")
-      @user.save
-      @foo = Foo.new(:user_id => @user.id)
-      @foo.save
-    end
-
-    # We'd like this to happen magically some day. Possible in 3.2
-    it "should eager load with replication instances" #do
-    #      user = User.slaves.includes(:foos).where(:id => @user.id).first
-    #      user.foos.first.should_not be_kind_of(Foo)
-    #    end
-
-    context "specifically defined replication association" do
-      it "should eager load with replication instances" do
-        user = User.slaves.includes(:foo_slaves).where(:id => @user.id).first
-        user.foo_slaves.first.should_not be_kind_of(Foo)
-      end
-    end
-  end
-  context "cross database joins" do
-    before :each do
-      @user = User.new(:name => "Testing")
-      @user.save
-      @foo = Foo.new(:user_id => @user.id)
-      @foo.save
-    end
-
-    it "should work" do
-      @user.foos.blank?.should be_false
-      found = Foo.select('users.name AS user_name').joins(:user).where(:id => @foo.id).first
-      found.user_name.blank?.should be_false
-    end
-
-    it "should work with replication" do
-      found = Foo.slaves.select('foos.*, users.name AS user_name').joins(:user).where(:id => @foo.id).first
-      found.user.blank?.should be_false
     end
   end
 end

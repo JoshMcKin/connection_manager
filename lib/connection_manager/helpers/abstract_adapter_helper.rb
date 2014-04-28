@@ -6,7 +6,7 @@ module ConnectionManager
 
     # Determines if connection supports cross database queries
     def cross_database_support?
-      (@config[:cross_database_support] || @config[:adapter].match(/(mysql)|(postgres)|(sqlserver)/i))
+      @cross_database_support ||= (@config[:cross_database_support] || @config[:adapter].match(/(mysql)|(postgres)|(sqlserver)/i))
     end
     alias :cross_schema_support? :cross_database_support?
 
@@ -32,31 +32,28 @@ module ConnectionManager
     end
 
     def slave_keys
-      return @config[:slaves].collect{|r| r.to_sym} if @config[:slaves]
-      []
+       @slave_keys ||= (@config[:slaves] ? @config[:slaves].collect{|r| r.to_sym} : [] )
     end
 
     def master_keys
-      return @config[:masters].collect{|r| r.to_sym} if @config[:masters]
-      []
+      @master_keys ||= (@config[:masters] ? @config[:masters].collect{|r| r.to_sym} : [])
     end
 
     if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
 
       # Returns the schema for a give table. Returns nil of multiple matches are found  
       def fetch_table_schema(table_name)
+        return nil unless cross_database_support?
         sql = "SELECT table_schema FROM INFORMATION_SCHEMA.TABLES WHERE table_name = '#{table_name}'"
-        found = nil
         results = execute(sql, 'SCHEMA')
         found = results.to_a
-        if (found.length == 1)
-          found = found[0][0]
-        end
-        found
+        return found[0][0] if (found.length == 1)
+        nil
       end
 
       # Returns table_schema.table_name for the given table. Returns nil if multiple matches are found
       def fetch_full_table_name(table_name)
+        return nil unless cross_database_support?
         return table_name if (table_name.to_s.match(/(^$)|(\.)/))
         sql = "SELECT CONCAT(table_schema,'.',table_name) FROM INFORMATION_SCHEMA.TABLES WHERE table_name = '#{table_name}'"
         found = nil
@@ -73,6 +70,7 @@ module ConnectionManager
       
       # Returns the schema for a give table. Returns nil of multiple matches are found      
       def fetch_table_schema(table_name)
+        return nil unless cross_database_support?
         sql = "SELECT table_schema FROM INFORMATION_SCHEMA.TABLES WHERE table_name = '#{table_name}'"
         execute_and_free(sql, 'SCHEMA') do |result|
           found = result.to_a
@@ -83,6 +81,7 @@ module ConnectionManager
 
       # Returns table_schema.table_name for the given table. Returns nil if multiple matches are found
       def fetch_full_table_name(table_name)
+        return nil unless cross_database_support?
         return table_name if (table_name.to_s.match(/(^$)|(\.)/))
         sql = "SELECT CONCAT(table_schema,'.',table_name) FROM INFORMATION_SCHEMA.TABLES WHERE table_name = '#{table_name}'"
         execute_and_free(sql, 'SCHEMA') do |result|
