@@ -16,24 +16,22 @@ end
 TestMigrations.down
 TestMigrations.up
 FactoryGirl.find_definitions
+# ActiveRecord::Base.logger = Logger.new(STDOUT)
 RSpec.configure do |config|
-  config.mock_with :mocha 
+  config.mock_with :mocha
   # Loads database.yml and establishes primary connection
   # Create tables when tests are completed
   config.before(:suite) {
-    require 'helpers/models_spec_helper.rb'    
-  }  
+    require 'helpers/models_spec_helper.rb'
+  }
   # Drops tables when tests are completed
   config.after(:suite){
     TestDB.clean
-  } 
+  }
   # Make sure every test is isolated.
   config.before(:each){
-    ModelsHelper.models.each{|m| Object.send(:remove_const, m)}  
+    ModelsHelper.models.each{|m| Object.send(:remove_const, m)}
     load 'helpers/models_spec_helper.rb'
     FactoryGirl.reload
   }
-    
 end
-
-

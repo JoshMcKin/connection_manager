@@ -10,10 +10,6 @@ module ConnectionManager
     def replication_methods
       @replication_methods ||= HashWithIndifferentAccess.new
     end
-    
-    def replicant_classes
-      @replicant_classes ||= HashWithIndifferentAccess.new
-    end
        
     # Is this class replicated
     def replicated?
@@ -42,7 +38,6 @@ module ConnectionManager
         connections = connection.replication_keys(options[:type]) if connections.blank?
         set_replications_to_method(connections,options[:name])
         build_repliciation_class_method(options)
-        build_replication_association_class(options)
         build_query_method_alias_method(options[:name])
         build_repliciation_instance_method(options[:name])
         options[:name]
@@ -96,37 +91,6 @@ module ConnectionManager
           using(fetch_replication_method("#{options[:name]}"))#{options[:readonly] ? '.readonly' : ''}
         end
       end
-      STR
-    end
-    
-    # Builds a class within the model with the name of replication method. Use this
-    # class as the :class_name options for associations when it is necessary to
-    # ensure eager loading uses a replication connection.
-    # 
-    # EX:
-    # 
-    #   class Foo < ActiveRecord::Base
-    #     belongs_to :user
-    #     replicated # use default name .slaves
-    #   end
-    #   
-    #   class MyClass < ActiveRecord::Base
-    #     has_many :foos
-    #     has_many :foo_slaves, :class_name => 'Foo::Slaves'
-    #     replicated
-    #   end
-    #   
-    #   a = MyClass.include(:foo_slaves).first
-    #   a.foo_slaves => [<Foo::Slave1ConnectionDup...>,<Foo::Slave1ConnectionDup...>...]
-    def build_replication_association_class(options)
-      class_eval <<-STR
-        class #{options[:name].titleize}
-          class << self
-            def method_missing(name, *args)
-              #{self.name}.#{options[:name]}.klass.send(name, *args)
-            end
-          end
-        end
       STR
     end
        
