@@ -31,18 +31,22 @@ class Region < ActiveRecord::Base
   #replicated
 end
 
-class Type < ActiveRecord::Base
-  
-end
+class Type < ActiveRecord::Base;end
 
 class SouthernFruit < Fruit
-  self.table_name = 'fruits'  
+  self.table_name = 'fruits'
+end
+
+class CmUser < ActiveRecord::Base
+  has_many :foos
+end
+
+class Foo < ActiveRecord::Base
+  belongs_to :cm_user
 end
 
 class ModelsHelper
   def self.models
-    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit", "Type"]
-  end 
+    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit", "Type", "Foo", "CmUser"]
+  end
 end
-
-
