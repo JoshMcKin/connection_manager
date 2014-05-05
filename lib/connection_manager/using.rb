@@ -20,6 +20,15 @@ module ConnectionManager
         @klass.superclass
       end
 
+      # https://github.com/rails/rails/blob/3-2-stable/activerecord/lib/active_record/relation/spawn_methods.rb#L154
+      def >= compare
+        @klass >= compare
+      end
+
+      def == compare
+        @klass == compare
+      end
+
       # Pass all methods to @klass, this ensures objects
       # build from the query are the correct class and
       # any settings in the model like table_name_prefix
