@@ -65,7 +65,7 @@ Run bundle install:
 
 In the above database.yml the Master databases are listed as "development" and "user_data_development".
 Replication databases are defined as normally connections and are added to the 'replications:' option for
-their master. The readonly option ensures all ActiveRecord objects returned from this connection are ALWAYS readonly.
+their master.
 
 
 ## Building Connection Classes
@@ -98,7 +98,7 @@ build connection classes for all the entries in the database.yml where
     'slave_1_production'   = 'Save1Connection'
     'slave_2_production'   = 'Save2Connection'
     'foo_data_production'  = 'FooDataConnection'
-    
+
 
 ## Using 
 

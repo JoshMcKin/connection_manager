@@ -13,7 +13,7 @@ describe ConnectionManager::ConnectionHandling do
           :username => TestDB.yml["test"]["username"],
           :password => TestDB.yml["test"]["password"]
 
-        }, {:readonly => true})
+        })
     end
     
     class MyPrefixedConnection < MyConnectionClass
