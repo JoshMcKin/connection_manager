@@ -9,10 +9,6 @@ module ConnectionManager
     end
     alias :cross_database_support? :cross_schema_support?
 
-    def readonly?
-      (config[:readonly] == true)
-    end
-
     def replicated?
       (!slave_keys.blank? || !master_keys.blank?)
     end
