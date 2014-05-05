@@ -2,7 +2,7 @@ module ConnectionManager
   module Using
     class Proxy
       attr_accessor :klass, :connection_class
-      
+
       def initialize(klass,connection_class)
         @klass = klass  # the @klass from an ActiveRecord::Relation
         @connection_class = (connection_class.is_a?(String) ? connection_class.constantize : connection_class)
@@ -20,13 +20,31 @@ module ConnectionManager
         @klass.superclass
       end
 
-      # https://github.com/rails/rails/blob/3-2-stable/activerecord/lib/active_record/relation/spawn_methods.rb#L154
       def >= compare
+        return @klass >= compare.klass if compare.is_a?(self.class)
         @klass >= compare
       end
 
       def == compare
+        return @klass == compare.klass if compare.is_a?(self.class)
         @klass == compare
+      end
+
+      def != compare
+        return @klass != compare.klass if compare.is_a?(self.class)
+        @klass != compare
+      end
+
+      def descendants
+        @klass.descendants
+      end
+
+      def subclasses
+        @klass.subclasses
+      end
+
+      def parent
+        @klass.parent
       end
 
       # Pass all methods to @klass, this ensures objects
