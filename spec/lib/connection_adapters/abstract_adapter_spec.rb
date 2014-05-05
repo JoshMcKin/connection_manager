@@ -23,17 +23,6 @@ describe ConnectionManager::AbstractAdapter do
     end
   end
 
-  describe '#readonly?' do
-    it "should be true if readonly is set in config" do
-      @con.stubs(:config).returns({:readonly => true})
-      expect(@con.readonly?).to be_true
-    end
-    it "should be false if readonly is not set in config" do
-      @con.stubs(:config).returns({})
-      expect(@con.readonly?).to be_false
-    end
-  end
-
   describe '#slave_keys' do
     it "should return slaves from config symbolized" do
       @con.stubs(:config).returns({:slaves => ['test','foo']})

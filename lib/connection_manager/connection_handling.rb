@@ -52,7 +52,6 @@ module ConnectionManager
     #
     # Options:
     # * :abstract_class - used the set #abstract_class, default is true
-    # * :readonly - force all instances to readonly
     # * :class_name - name of connection class name, default is current class name
     # * :table_name_prefix - prefix to append to table name for cross database joins,
     #     default is the "#{self.database_name}."
