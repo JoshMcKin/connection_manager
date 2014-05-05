@@ -32,6 +32,12 @@ describe ConnectionManager::Using do
         fruit = FactoryGirl.create(:fruit)
         expect(Fruit.using("CmFooSlaveConnection").where(:id => fruit.id).first).to eql(fruit)
       end
+
+      it "should work" do
+        fb = FactoryGirl.create(:fruit_basket)
+        expect(lambda {FruitBasket.using("CmFooSlaveConnection").
+          joins(:fruit,:basket).includes(:fruit,:basket).where(:id => fb.id).first}).to_not raise_error
+      end
     end
 
     context 'A shard like connection' do
