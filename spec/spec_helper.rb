@@ -7,26 +7,18 @@ require 'active_support'
 require 'logger'
 require 'factory_girl'
 require 'helpers/database_spec_helper'
-if(defined? RUBY_ENGINE and 'jruby' == RUBY_ENGINE)
-  TestDB.connect('jdbcmysql')
-else
-  TestDB.connect('mysql2')
-end
 
+TestDB.connect#(true)
 TestMigrations.down
 TestMigrations.up
 FactoryGirl.find_definitions
-# ActiveRecord::Base.logger = Logger.new(STDOUT)
 RSpec.configure do |config|
   config.mock_with :mocha
   # Loads database.yml and establishes primary connection
   # Create tables when tests are completed
   config.before(:suite) {
     require 'helpers/models_spec_helper.rb'
-  }
-  # Drops tables when tests are completed
-  config.after(:suite){
-    TestDB.clean
+    ConnectionManager::Builder.build_connection_classes(TestDB.yml.select{ |k,v| v['build_connection_class'] && k.match(ConnectionManager::Builder.env_regex)}.keys)
   }
   # Make sure every test is isolated.
   config.before(:each){

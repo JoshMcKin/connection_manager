@@ -8,7 +8,7 @@ describe ConnectionManager::Shards do
       a = Fruit.shards do |shard|
         shard.first
       end
-      a.should be_a_kind_of(Array)
+      expect(a).to be_a(Array)
     end
     
     it "should execute the active record methods on the the provided models" do
@@ -17,7 +17,7 @@ describe ConnectionManager::Shards do
       a = Fruit.shards do |shard|
         shard.where(:id => fruit.id).first
       end
-      klasses.include?(a[0].class.name).should be_true
+      expect(klasses.include?(a[0].class.name)).to be_true
     end
    
       
@@ -34,7 +34,7 @@ describe ConnectionManager::Shards do
       cfruit = Fruit.shards do |shard|
         shard.where('id = ?', fruit.id).first    
       end
-      (afruit == bfruit && bfruit == cfruit).should be_true
+      expect((afruit == bfruit && bfruit == cfruit)).to be_true
     end
   end
 end
