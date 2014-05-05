@@ -22,6 +22,7 @@ module ConnectionManager
         rescue NameError
           klass = Class.new(ActiveRecord::Base)
           new_connection_class = Object.const_set(class_name, klass)
+          new_connection_class.abstract_class = true
           new_connection_class.establish_connection(connection_key)
           ConnectionManager.logger.info "Connection::Manager built: #{class_name} for #{connection_key}" if ConnectionManager.logger
           new_connection_class

@@ -24,5 +24,8 @@ describe ConnectionManager::Builder do
     it "should have a super class of ActiveRecord::Base" do
      expect(MyConnectionClass.superclass).to eql(ActiveRecord::Base)
     end
+    it "should be an abstract class" do
+      expect(MyConnectionClass.abstract_class?).to be_true
+    end
   end   
 end
