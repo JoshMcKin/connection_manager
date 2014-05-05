@@ -1,15 +1,10 @@
 # ConnectionManager
-Multi-Database, Replication and Sharding for ActiveRecord.
+Improved cross-schema, replication and mutli-DMS gem for ActiveRecord.
 
-## Background
-ActiveRecord, for quite some time now, has supported multiple database connections 
-through the use of #establish_connection and connection classes [more info](http://api.rubyonrails.org/classes/ActiveRecord/Base.html)
-Multiple databases, replication and shards can be implemented directly in rails without
-patching, but a gem helps to reduce redundant code and ensure consistency. 
-ConnectionManager replaces all the connection classes and subclasses required 
-for multiple database support in Rails with a few class methods and simple 
-database.yml configuration. Since ConnectionManager does not alter
-ActiveRecord's connection pool, thread safety is not a concern.
+## Features
+  * Threadsafe connection switching
+  * Replication can be defined in the database.yml or in the model, adds #slaves and #masters as ActiveRecord::Relations.
+  * Automatically builds connection classes, if configured.
 
 ## Installation
 
@@ -31,43 +26,42 @@ Run bundle install:
 
     common: &common
     adapter: mysql2
-    username: root
-    password: *****
     pool: 20
-    connect_timeout: 20
-    timeout: 900
+    reconnect: true
     socket: /tmp/mysql.sock
-    build_connection_class: true
   
-    development:
+    production:
       <<: *common
-      database: test_app
-      slaves: [slave_1_test_app_development, slave_2_test_app_development]
+      database: myapp
+      host: <%=ENV['DB_HOST']%>
+      username: <%=ENV['DB_USER']%>
+      password: <%=ENV['DB_PASS']%>
+      slaves: [slave_1_production, slave_2_production]   
+      build_connection_class: true
 
-    slave_1_test_app_development:
+    slave_1_production:
       <<: *common
-      database: test_app
-      readonly: true
-  
-    slave_2_test_app_development:
-      <<: *common
-      database: test_app
-      readonly: true
+      host: <%=ENV['SLAVE_1_DB_HOST']%>
+      username: <%=ENV['SLAVE_1_DB_USER']%>
+      password: <%=ENV['SLAVE_1_DB_PASS']%>
+      database: myapp
+      build_connection_class: true
 
-    user_data_development
+    slave_2_production:
       <<: *common
+     host: <%=ENV['SLAVE_2_DB_HOST']%>
+      username: <%=ENV['SLAVE_2_DB_USER']%>
+      password: <%=ENV['SLAVE_2_DB_PASS']%>
+      database: myapp
+      build_connection_class: true
+
+    foo_data_production
+      <<: *common
+      host: <%=ENV['USER_DATA_DB_HOST']%>
+      username: <%=ENV['USER_DATA_DB_USER']%>
+      password: <%=ENV['USER_DATA_DB_PASS']%>
       database: user_data
-      slaves: [slave_1_user_data_development, slave_2_user_data_development]
-
-    slave_1_user_data_development
-      <<: *common
-      database: user_data
-      readonly: true
-
-    slave_2_user_data_development
-      <<: *common
-      database: user_data
-      readonly: true
+      build_connection_class: true
 
 In the above database.yml the Master databases are listed as "development" and "user_data_development".
 Replication databases are defined as normally connections and are added to the 'replications:' option for
@@ -80,75 +74,67 @@ their master. The readonly option ensures all ActiveRecord objects returned from
 ConnectionManager provides establish_managed_connection for build connection 
 classes and connection to multiple databases.
 
-    class MyConnection < ActiveRecord::Base
-      establish_managed_connection("my_database_#{Rails.env}", :readonly => true)
+    class MySlaveConnection < ActiveRecord::Base
+      establish_managed_connection("slave_1_#{Rails.env}")
     end
     
-    class User < MyConnection
-    end
+    class User < MySlaveConnection;end
     
     MyConnection    => MyConnection(abstract)
     @user = User.first
-    @user.readonly? => true
+    @user
 
 The establish_managed_connection method, runs establish_connection with the supplied
-database.yml key, sets abstract_class to true, and (since :readonly is set to true) ensures
-all ActiveRecord objects build using this connection class are readonly. If readonly is set
-to true in the database.yml, passing the readonly option is not necessary.  
-
-
+database.yml key, sets abstract_class to true.
+    
 ### Automatically   
 ActiveRecord can build all your connection classes for you. 
 The connection class names will be based on the database.yml keys.ActiveRecord will
 build connection classes for all the entries in the database.yml where 
 "build_connection_class" is true, and match the current environment settings
 
+    # Class names derived from YML keys
+    'production'           = 'BaseConnection'
+    'slave_1_production'   = 'Save1Connection'
+    'slave_2_production'   = 'Save2Connection'
+    'foo_data_production'  = 'FooDataConnection'
+    
+
 ## Using 
 
 The using method allows you specify the connection class to use
-for query. The return objects will have the correct model name, but the instance's
-class's superclass will be the connection class and all database actions performed 
-on the instance will use the connection class's connection.
+for query. 
     
     User.using("Slave1Connection").first
 
     search = User.where(disabled => true)
-    @legacy_users = search.using("Shard1Connection").all #=> [<User::Shard1ConnectionDup...>,<User::Shard1ConnectionDup..]
-    @legacy_users.first.save #=> uses the Shard1Connection connection
+    @legacy_users = search.using("Slave1Connection").all #=> [<User...>,<User...>]
+    @legacy_users.first.save #=> uses the SlaveConnection connection
 
     @new_users = search.page(params[:page]).all => [<User...>,<User...>]
 
 ## Replication
 
-Simply add 'replicated' to your model.
+ConnectionManager creates ActiveRecord::Relation methods :slaves and :masters.
+
+If you specify your replication model in your database.yml there is nothing more you need to do. If you looking for more
+granular control you describe the replication setup on a per-model level.
     
     class User < UserDataConnection
         has_one :job
         has_many :teams
-        replicated # implement replication        
-        # model code ...
+        replicated :slaves => [MySlave1Connection, MySlave2Connection]
     end
 
-The replicated method builds models who inherit from the main model.
-    User::Slave1UserDataConnectionDup.superclass => Slave1UserDataConnection(abstract)
-    User::Slave1UserDataDup.first => returns results from slave_1_user_data_development 
-    User::Slave2UserDataDup.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all => returns results from slave_2_user_data_development
+    User.limit(2).slaves.all # => [<User...>,<User...>] results from MySlave1Connection or MySlave2Connection 
 
-Finally, ConnectionManager creates an additional class method that shifts through your 
-available slave connections each time it is called using a different connection on each action.
+
+If there are multiple replication connections the system will pick a connection at random using Array#sample.
     
     User.slaves.first  => returns results from slave_1_use_data_development 
-    User.slaves.last =>  => returns results from slave_2_use_data_development 
-    User.slaves.where(['created_at BETWEEN ? and ?',Time.now - 3.hours, Time.now]).all  => returns results from slave_1_user_data_development 
-    User.slaves.where(['created_at BETWEEN ? and ?',Time.now - 5.days, Time.now]).all  => returns results from slave_2_user_data_development 
-
-Replicated defaults to the slaves replication type,so if you have only masters and a combination
-of masters and slaves for replication, you have set the replication type to masters
-
-    class User < UserDataConnection
-        replicated #slaves replication
-        replicated :type => :masters, :name => 'masters' # masters replication
-    end
+    User.slaves.last => returns results from slave_2_user_data_development  
+    User.slaves.where('id BETWEEN ? and ?',1,100]).all  => returns results from slave_1_user_data_development 
+    User.slaves.where('id BETWEEN ? and ?',1,100]).all  => returns results from slave_2_user_data_development 
 
 ## Sharding
 
@@ -176,7 +162,7 @@ originate from classes that used establish_connection you must surround your cod
       Some queries...
     }
 
-In Rails for less complicated schemas you could simply create an around filter for your controllers
+In Rails, you can create an around filter for your controllers
 
     class ApplicationController < ActionController::Base
       around_filter :cache_slaves
@@ -186,8 +172,7 @@ In Rails for less complicated schemas you could simply create an around filter f
       end
 
 ## Migrations
-
-Nothing implement now to help but there are lots of potential solutions [here] (http://stackoverflow.com/questions/1404620/using-rails-migration-on-different-database-than-standard-production-or-devel)
+There are lots of potential solutions [here] (http://stackoverflow.com/questions/1404620/using-rails-migration-on-different-database-than-standard-production-or-devel)
 
 ## TODOs
 * Maybe add migration support for Rails AR implementations.
