@@ -32,4 +32,8 @@ module ConnectionManager
   def self.logger
     @logger ||= ActiveRecord::Base.logger
   end
+  
+  def self.logger=logger
+    @logger = logger
+  end
 end
