@@ -9,6 +9,18 @@ module ConnectionManager
     end
     alias :cross_database_support? :cross_schema_support?
 
+    def mysql?
+      @is_mysql ||= (config[:adapter].match(/(mysql)/i))
+    end
+
+    def postgresql?
+      @is_postgresql ||= (config[:adapter].match(/(postgres)/i))
+    end
+
+    def sqlserver?
+      @is_sqlserver ||= (config[:adapter].match(/(sqlserver)/i))
+    end
+
     def replicated?
       (!slave_keys.blank? || !master_keys.blank?)
     end

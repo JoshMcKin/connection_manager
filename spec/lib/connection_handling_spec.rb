@@ -24,10 +24,7 @@ describe ConnectionManager::ConnectionHandling do
     class MyFoo < MyConnectionClass
       self.table_name = 'foos'
     end
-    
-    class MyReadonlyFoo < MyReadonlyConnectionClass
-      self.table_name = 'foos'
-    end
+
   end
   describe '#establish_managed_connection' do
     context 'the connection class' do
@@ -59,6 +56,17 @@ describe ConnectionManager::ConnectionHandling do
       Fruit.use_database('my_schema',{:table_name => 'apples'})
       expect(Fruit.table_name).to eql('my_schema.apples')
       expect(Fruit.table_name_prefix).to eql('my_schema.')
+    end
+
+    it "should get database from connection.config if table name prefix is not set and adapter is mysql" do
+      expect(Fruit.connection.mysql?).to be_true
+      Fruit.table_name_prefix = nil
+      Fruit.table_name = 'fruit'
+      expect(Fruit.table_name).to eql('fruit')
+      expect(Fruit.table_name_prefix).to be_nil
+      Fruit.use_schema
+      expect(Fruit.table_name_prefix).to eql("cm_test.")
+      expect(Fruit.table_name).to eql('cm_test.fruit')
     end
   end
 end

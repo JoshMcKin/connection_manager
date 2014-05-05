@@ -7,7 +7,8 @@ module ConnectionManager
     # Attempts to return the schema from table_name and table_name_prefix
     def schema_name
       return self.table_name.split('.')[0] if self.table_name && self.table_name.match(/\./)
-      self.table_name_prefix.to_s.gsub(/\./,'') if self.table_name_prefix && self.table_name_prefix.match(/\./)
+      return self.table_name_prefix.to_s.gsub(/\./,'') if self.table_name_prefix && self.table_name_prefix.match(/\./)
+      return self.connection.config[:database] if self.connection.mysql?
     end
 
     # A place to store managed connections
@@ -38,8 +39,14 @@ module ConnectionManager
     #
     def use_database(database_name=nil,opts={})
       # self.current_database_name = database_name if database_name
-      opts[:table_name_prefix] = "#{database_name}." if opts[:table_name_prefix].blank?
-      unless self.abstract_class? || self.name == "ActiveRecord::Base"
+      if opts[:table_name_prefix].blank?
+        if database_name
+          opts[:table_name_prefix] = "#{database_name}."
+        elsif self.connection.mysql? && self.connection.config[:database]
+          opts[:table_name_prefix] = "#{self.connection.config[:database]}."
+        end
+      end
+      unless (self.abstract_class? || self.name == "ActiveRecord::Base")
         opts[:table_name] = self.table_name if opts[:table_name].blank?
         opts[:table_name].gsub!(self.table_name_prefix,'') unless self.table_name_prefix.blank?
         self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"
