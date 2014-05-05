@@ -1,52 +1,63 @@
 class CmReplicationConnection < ActiveRecord::Base
-  establish_managed_connection(:slave_1_cm_test)
+  establish_connection(:test_other)
 end
 
-class CmReplication2Connection < ActiveRecord::Base
-  establish_managed_connection(:slave_2_cm_test)
+class OtherConnection < ActiveRecord::Base
+  establish_connection(:test_other)
 end
 
 class Basket < ActiveRecord::Base
   has_many :fruit_baskets
   has_many :fruit, :through => :fruit_baskets
-  #replicated
+end
+
+class PgFruit < OtherConnection
+  self.table_name = "cm_test.fruits"
 end
 
 class Fruit < ActiveRecord::Base
+  self.table_name_prefix = 'cm_test.'
   belongs_to :region
   has_many :fruit_baskets
   has_many :baskets, :through => :fruit_baskets
-  #replicated
 end
 
 #Join table
 class FruitBasket < ActiveRecord::Base
   belongs_to :fruit
   belongs_to :basket
-  #replicated
 end
 
 class Region < ActiveRecord::Base
   has_one :fruit
-  #replicated
 end
 
 class Type < ActiveRecord::Base;end
 
-class SouthernFruit < Fruit
-  self.table_name = 'fruits'
+class CmUser < ActiveRecord::Base
+  self.table_name_prefix = 'cm_user_test.'
+  has_many :foos
 end
 
-class CmUser < ActiveRecord::Base
-  has_many :foos
+class CmOtherUser < ActiveRecord::Base
+  self.table_name = 'cm_user_test.cm_users'
 end
 
 class Foo < ActiveRecord::Base
   belongs_to :cm_user
 end
 
+# Subclassed
+class SouthernFruit < Fruit
+  self.table_name = 'fruits'
+end
+
+class FruitCore < Fruit
+  self.table_name = 'fruits'
+end
+
 class ModelsHelper
   def self.models
-    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit", "Type", "Foo", "CmUser"]
+    ["Basket", "Fruit", "FruitBasket", "Region","SouthernFruit", "Type", "Foo", "CmUser", "FruitCore"]
   end
 end

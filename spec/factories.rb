@@ -13,7 +13,7 @@ FactoryGirl.define do
   end
 
   factory :fruit do
-    name "MyString"
+    name {FactoryGirl.generate(:rand_name)}
     region
   end
 
