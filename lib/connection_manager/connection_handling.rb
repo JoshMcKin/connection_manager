@@ -10,8 +10,23 @@ module ConnectionManager
       return self.table_name_prefix.to_s.gsub(/\./,'') if self.table_name_prefix && self.table_name_prefix.match(/\./)
       return self.connection.config[:database] if self.connection.mysql?
     end
+    alias :database_name :schema_name
 
-    # A place to store managed connections
+    # Set the unformatted schema name for the given model / connection class
+    # EX: class User < ActiveRecord::Base
+    #       self.schema_name = 'users_db'
+    #     end
+    #
+    #     User.schema_name        # => 'users_db'
+    #     User.table_name_prefix  # => 'users_db.'
+    #     User.table_name         # => 'users_db.users'
+    def schema_name=schema_name
+      self.table_name_prefix = "#{schema_name}." if schema_name && schema_name.to_s != ""
+      self.table_name = "#{self.table_name_prefix}#{self.table_name}" unless self.abstract_class?
+    end
+    alias :database_name= :schema_name=
+
+      # A place to store managed connections
     def managed_connections
       @@managed_connections
     end
@@ -20,48 +35,13 @@ module ConnectionManager
       managed_connections.values.flatten
     end
 
-    # Tell Active Record to use a different database/schema on this model.
-    # You may call #use_database when your schemas reside on the same database server
-    # and you do not want to create extra connection class and database.yml entries.
-    #
-    # Options:
-    # * :table_name_prefix - the prefix required for making cross database/schema
-    # joins for you database management system. By default table_name_prefix is the
-    # database/schema name followed by a period EX: "my_database."
-    # * :table_name - the table name for the model if it does not match ActiveRecord
-    # naming conventions
-    #
-    # EX: class LegacyUser < ActiveRecord::Base
-    #       use_database('DBUser', :table_name => 'UserData')
-    #     end
-    #
-    #     LegacyUser.limit(1).to_sql => "SELECT * FROM `BDUser`.`UserData` LIMIT 1
-    #
-    def use_database(database_name=nil,opts={})
-      # self.current_database_name = database_name if database_name
-      if opts[:table_name_prefix].blank?
-        if database_name
-          opts[:table_name_prefix] = "#{database_name}."
-        elsif self.connection.mysql? && self.connection.config[:database]
-          opts[:table_name_prefix] = "#{self.connection.config[:database]}."
-        end
-      end
-      unless (self.abstract_class? || self.name == "ActiveRecord::Base")
-        opts[:table_name] = self.table_name if opts[:table_name].blank?
-        opts[:table_name].gsub!(self.table_name_prefix,'') unless self.table_name_prefix.blank?
-        self.table_name = "#{opts[:table_name_prefix]}#{opts[:table_name]}"
-      end
-      self.table_name_prefix = opts[:table_name_prefix] unless opts[:table_name_prefix].blank?
-    end
-    alias :use_schema :use_database
-
     # Establishes and checks in a connection, normally for abstract classes AKA connection classes.
     #
     # Options:
     # * :abstract_class - used the set #abstract_class, default is true
-    # * :class_name - name of connection class name, default is current class name
-    # * :table_name_prefix - prefix to append to table name for cross database joins,
-    #     default is the "#{self.database_name}."
+    # * :schema_name - the unformatted schema name for connection, is inherited but child classes
+    # * :table_name - the table name for the model, should not be used on abstract classes
+    #
     # EX:
     #   class MyConnection < ActiveRecord::Base
     #     establish_managed_connection :key_from_db_yml,{:readonly => true}
@@ -72,7 +52,12 @@ module ConnectionManager
               :abstract_class => true}.merge(opts)
       establish_connection(yml_key)
       self.abstract_class = opts[:abstract_class]
-      use_database(self.schema_name,opts)
+      self.table_name = opts[:table_name] if opts[:table_name]
+      if (opts[:schema_name] || opts[:database_name])
+        self.schema_name = (opts[:schema_name] || opts[:database_name])
+      else
+        self.schema_name = self.schema_name unless !self.connection.cross_schema_support?
+      end
     end
 
     def self.included(base)

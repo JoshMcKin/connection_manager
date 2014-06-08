@@ -10,7 +10,7 @@ module ConnectionManager
       # Builds connection classes using the database keys provided; expects an array.
       def build_connection_classes(database_keys_to_use=database_keys_for_auto_build)
         database_keys_to_use.each do |key|
-          build_connection_class(connection_class_name(key),key)
+          build_connection_class(connection_class_name(key),key.to_sym)
         end
       end
 
@@ -23,7 +23,7 @@ module ConnectionManager
           klass = Class.new(ActiveRecord::Base)
           new_connection_class = Object.const_set(class_name, klass)
           new_connection_class.abstract_class = true
-          new_connection_class.establish_connection(connection_key)
+          new_connection_class.establish_connection(connection_key.to_sym)
           ConnectionManager.logger.info "Connection::Manager built: #{class_name} for #{connection_key}" if ConnectionManager.logger
           new_connection_class
         end

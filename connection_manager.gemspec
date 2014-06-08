@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'activerecord', '>= 3.0', '<= 4.1'
   s.add_runtime_dependency 'activesupport', '>= 3.0', '<= 4.1'
   s.add_runtime_dependency 'thread_safe'
-  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'rspec', '~> 2.0'
   s.add_development_dependency 'autotest'
   s.add_development_dependency 'mocha'
   s.add_development_dependency 'factory_girl'
