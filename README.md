@@ -136,6 +136,39 @@ If there are multiple replication connections the system will pick a connection 
     User.slaves.where('id BETWEEN ? and ?',1,100]).all  => returns results from slave_1_user_data_development 
     User.slaves.where('id BETWEEN ? and ?',1,100]).all  => returns results from slave_2_user_data_development 
 
+### Repliation with cross-schema queries
+Setup replication as you would normally
+
+Next build connection classes that inherit from you base connection classes for each of your schemas
+EX
+    class UserSchema < ActiveRecord::Base
+      self.abstract_class = true
+      self.table_name_prefix = 'user_schema.'
+
+      def self.inherited(base)
+        base.use_schema(self.schema_name)
+      end
+    end
+
+    class User < UserSchema
+      has_many :bars
+    end
+
+    class FooSchema < ActiveRecord::Base
+      self.abstract_class = true
+      self.table_name_prefix = 'foo.'
+
+      def self.inherited(base)
+        base.use_schema(self.schema_name)
+      end
+    end
+
+    class Bar < FooSchema
+      belongs_to :user
+    end
+
+    User.joins(:bars).limit(1).to_sql # => SELECT * FROM `user_schema`.`users` INNER JOIN `foo.bars` ON `foo.bars`.`user_id` = `user_schema`.`users` LIMIT 1"
+
 ## Sharding
 
 After tinkering with some solutions for shards, I've come to a similar conclusion as [DataFabric] (https://github.com/mperham/data_fabric):
