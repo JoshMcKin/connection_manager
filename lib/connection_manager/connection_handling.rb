@@ -26,7 +26,12 @@ module ConnectionManager
     end
     alias :database_name= :schema_name=
 
-      # A place to store managed connections
+    def use_database(database_name)
+      warn "[DEPRECATION] `use_database` is deprecated.  Please use `schema_name=` instead."
+      self.schema_name=database_name
+    end
+
+    # A place to store managed connections
     def managed_connections
       @@managed_connections
     end
