@@ -64,15 +64,15 @@ Run bundle install:
       build_connection_class: true
 
 In the above database.yml the Master databases are listed as "development" and "user_data_development".
-Replication databases are defined as normally connections and are added to the 'replications:' option for
+Replication databases are defined as normally connections and are added to the `replication_connections` for
 their master.
-
 
 ## Building Connection Classes
 
 ### Manually   
-ConnectionManager provides establish_managed_connection for build connection 
-classes and connection to multiple databases.
+ConnectionManager provides `establish_managed_connection` for build connection 
+classes and connection to multiple databases. The `establish_managed_connection method`, 
+runs `establish_connection` with the supplied database.yml key, sets `abstract_class` to true.
 
     class MySlaveConnection < ActiveRecord::Base
       establish_managed_connection("slave_1_#{Rails.env}")
@@ -80,18 +80,17 @@ classes and connection to multiple databases.
     
     class User < MySlaveConnection;end
     
-    MyConnection    => MyConnection(abstract)
+    MyConnection      # => MyConnection(abstract)
     @user = User.first
-    @user
+    @user             # => #<User id:1>
 
-The establish_managed_connection method, runs establish_connection with the supplied
-database.yml key, sets abstract_class to true.
+
     
 ### Automatically   
 ActiveRecord can build all your connection classes for you. 
-The connection class names will be based on the database.yml keys.ActiveRecord will
+The connection class names will be based on the database.yml keys. ActiveRecord will
 build connection classes for all the entries in the database.yml where 
-"build_connection_class" is true, and match the current environment settings
+`build_connection_class: = true`, and match the current environment settings
 
     # Class names derived from YML keys
     'production'           = 'BaseConnection'
@@ -108,7 +107,7 @@ for query.
     User.using("Slave1Connection").first
 
     search = User.where(disabled => true)
-    @legacy_users = search.using("Slave1Connection").all #=> [<User...>,<User...>]
+    @legacy_users = search.using("Slave1Connection").all # => [<User...>,<User...>]
     @legacy_users.first.save #=> uses the SlaveConnection connection
 
     @new_users = search.page(params[:page]).all => [<User...>,<User...>]
@@ -172,7 +171,7 @@ EX
 ## Sharding
 
 After tinkering with some solutions for shards, I've come to a similar conclusion as [DataFabric] (https://github.com/mperham/data_fabric):
-"Sharding should be implemented at the application level". The #shards method is very basic and
+"Sharding should be implemented at the application level". The `shards` method is very basic and
 while it may be useful to most folks, it should really serve as an example of a possible solutions
 to your shard requirements.
 
