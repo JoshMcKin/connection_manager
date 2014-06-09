@@ -20,11 +20,11 @@ describe ConnectionManager::Using do
 
     it "should have the same connection if called from model or from relation" do
       expect(Fruit.where(:name => "malarky").using("CmFooSlaveConnection").connection.
-        config).to eql(Fruit.using("CmFooSlaveConnection").where(:name => "malarky").connection.config)
+             config).to eql(Fruit.using("CmFooSlaveConnection").where(:name => "malarky").connection.config)
       expect(Fruit.using("CmFooSlaveConnection").where(:name => "malarky").connection.
-        config).to_not eql(Fruit.where(:name => "malarky").connection.config)
+             config).to_not eql(Fruit.where(:name => "malarky").connection.config)
       expect(Fruit.where(:name => "malarky").using("CmFooSlaveConnection").connection.
-        config).to_not eql(Fruit.where(:name => "malarky").connection.config)
+             config).to_not eql(Fruit.where(:name => "malarky").connection.config)
     end
 
     context "A replication like connection" do
@@ -36,7 +36,7 @@ describe ConnectionManager::Using do
       it "should work" do
         fb = FactoryGirl.create(:fruit_basket)
         expect(lambda {FruitBasket.using("CmFooSlaveConnection").
-          joins(:fruit,:basket).includes(:fruit,:basket).where(:id => fb.id).first}).to_not raise_error
+                       joins(:fruit,:basket).includes(:fruit,:basket).where(:id => fb.id).first}).to_not raise_error
       end
     end
 
@@ -44,6 +44,19 @@ describe ConnectionManager::Using do
       it "should use other connection" do
         fruit = FactoryGirl.create(:fruit)
         expect(Fruit.using("OtherConnection").where(:name => fruit.name).exists?).to be_false
+      end
+    end
+
+    context "`klass` comparators should work" do
+      context "Proxy to non proxy" do
+        it "should work" do
+          expect(lambda { Fruit.using("OtherConnection").klass >=  Fruit.where(:id => 1).klass}).to_not raise_error
+        end
+      end
+      context "non-proxy to proxy" do
+        it "should work" do
+          expect(lambda { Fruit.where(:id => 1).klass >= Fruit.using("OtherConnection").klass}).to_not raise_error
+        end
       end
     end
   end

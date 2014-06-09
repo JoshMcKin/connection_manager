@@ -1,5 +1,21 @@
 module ConnectionManager
   module Using
+    module ClassMethods
+      def >=(compare)
+        return self >= compare.klass if compare.is_a?(ConnectionManager::Using::Proxy)
+        super(compare)
+      end
+
+      def ==(compare)
+        return self == compare.klass if compare.is_a?(ConnectionManager::Using::Proxy)
+        super(compare)
+      end
+
+      def !=(compare)
+        return self != compare.klass if compare.is_a?(ConnectionManager::Using::Proxy)
+        super(compare)
+      end
+    end
     class Proxy
       attr_accessor :klass, :connection_class
 
@@ -61,3 +77,5 @@ module ConnectionManager
     end
   end
 end
+ActiveRecord::Relation.send(:extend, ConnectionManager::Using::ClassMethods)
+ActiveRecord::Base.send(:extend, ConnectionManager::Using::ClassMethods)

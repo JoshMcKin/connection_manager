@@ -5,6 +5,10 @@ HEAD
 =======
 - Nothing yet!
 
+1.1.1
+=======
+- Fix bug when comparing relation.klass to Using::Proxy instance.klass 
+
 1.1.0
 =======
 - BREAKING CHANGE - Code has been organized to mirror as much a possible their ActiveRecord 4 counter parts.
