@@ -22,11 +22,11 @@ module ConnectionManager
       def initialize(klass,connection_class)
         @klass = klass  # the @klass from an ActiveRecord::Relation
         @connection_class = (connection_class.is_a?(String) ? connection_class.constantize : connection_class)
+        ConnectionManager.logger.info "Using proxy connection: #{@connection_class.name} for #{@klass.name}" if ConnectionManager.logger
       end
 
       # Use the connection from the connection class
       def connection
-        ConnectionManager.logger.info "Using proxy connection: #{@connection_class.name} for #{@klass.name}" if ConnectionManager.logger
         @connection_class.connection
       end
 
