@@ -1,3 +1,3 @@
 module ConnectionManager
-  VERSION = "1.1.4"
+  VERSION = "1.1.5"
 end

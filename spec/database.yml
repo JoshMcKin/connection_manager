@@ -8,11 +8,9 @@ common: &common
 
 master: &master
   username: root
-  password: omegared
 
 readonly: &readonly
   username: root
-  password: omegared
 
 mysql_without_db:
   <<: *common
