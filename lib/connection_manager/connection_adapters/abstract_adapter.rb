@@ -1,8 +1,7 @@
 module ConnectionManager
   module AbstractAdapter
-    def config
-      @config
-    end
+    attr_reader :config
+
     # Determines if connection supports cross database queries
     def cross_schema_support?
       @cross_schema_support ||= (config[:adapter].match(/(mysql)|(postgres)|(sqlserver)/i))

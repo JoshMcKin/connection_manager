@@ -35,6 +35,14 @@ module ConnectionManager
       set_replications_connections(options)
     end
 
+    def fetch_slave_connection
+      fetch_replication_connection(:slaves)
+    end
+
+    def fetch_master_connection
+      fetch_replication_connection(:masters)
+    end
+
     private
 
     # Fetch a connection class name from out replication_connections pool.
@@ -46,14 +54,6 @@ module ConnectionManager
       available_connections = self.replication_connections[method_name] || []
       raise ArgumentError, "No connections found for #{method_name}." if available_connections.blank?
       available_connections.sample
-    end
-
-    def fetch_slave_connection
-      fetch_replication_connection(:slaves)
-    end
-
-    def fetch_master_connection
-      fetch_replication_connection(:masters)
     end
 
     # Builds replication connection classes and methods

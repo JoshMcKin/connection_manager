@@ -10,11 +10,11 @@ module ConnectionManager
     end
 
     def slaves
-      using(@klass.send(:fetch_slave_connection))
+      using(@klass.fetch_slave_connection)
     end
 
     def masters
-      using(@klass.send(:fetch_master_connection))
+      using(@klass.fetch_master_connection)
     end
   end
 end
