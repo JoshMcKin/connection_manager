@@ -17,8 +17,4 @@ module ConnectionManager
     end
   end
 end
-if ActiveRecord::VERSION::MAJOR == 4
-  ActiveRecord::Core::ClassMethods.send(:include,ConnectionManager::Core)
-else
-  ActiveRecord::Base.extend ConnectionManager::Core
-end
+ActiveRecord::Core::ClassMethods.send(:include,ConnectionManager::Core)

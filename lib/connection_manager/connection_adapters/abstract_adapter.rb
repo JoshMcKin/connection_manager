@@ -4,20 +4,20 @@ module ConnectionManager
 
     # Determines if connection supports cross database queries
     def cross_schema_support?
-      @cross_schema_support ||= (config[:adapter].match(/(mysql)|(postgres)|(sqlserver)/i))
+      @cross_schema_support ||= (config[:adapter] =~ /(mysql)|(postgres)|(sqlserver)/i)
     end
     alias :cross_database_support? :cross_schema_support?
 
     def mysql?
-      @is_mysql ||= (config[:adapter].match(/(mysql)/i))
+      @is_mysql ||= (config[:adapter] =~ /(mysql)/i)
     end
 
     def postgresql?
-      @is_postgresql ||= (config[:adapter].match(/(postgres)/i))
+      @is_postgresql ||= (config[:adapter] =~ /(postgres)/i)
     end
 
     def sqlserver?
-      @is_sqlserver ||= (config[:adapter].match(/(sqlserver)/i))
+      @is_sqlserver ||= (config[:adapter] =~ /(sqlserver)/i)
     end
 
     def replicated?
