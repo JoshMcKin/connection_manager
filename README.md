@@ -12,7 +12,7 @@ ConnectionManager is available through [Rubygems](https://rubygems.org/gems/conn
 
     $ gem install connection_manager
 
-## Rails 3/4 setup
+## Rails 4 setup
 
 Add connection_manager to you gemfile:
     

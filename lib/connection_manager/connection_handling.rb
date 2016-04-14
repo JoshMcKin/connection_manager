@@ -6,8 +6,8 @@ module ConnectionManager
 
     # Attempts to return the schema from table_name and table_name_prefix
     def schema_name
-      return self.table_name.split('.')[0] if self.table_name && self.table_name.match(/\./)
-      return self.table_name_prefix.to_s.gsub(/\./,'') if self.table_name_prefix && self.table_name_prefix.match(/\./)
+      return self.table_name.split('.')[0] if self.table_name && self.table_name =~ /\./
+      return self.table_name_prefix.to_s.gsub(/\./,'') if self.table_name_prefix && self.table_name_prefix =~ /\./
       return self.connection.config[:database] if self.connection.mysql?
     end
     alias :database_name :schema_name
@@ -21,7 +21,7 @@ module ConnectionManager
     #     User.table_name_prefix  # => 'users_db.'
     #     User.table_name         # => 'users_db.users'
     def schema_name=schema_name
-      self.table_name_prefix = "#{schema_name}." if schema_name && schema_name.to_s != ""
+      self.table_name_prefix = "#{schema_name}." if schema_name && !schema_name.blank?
       self.table_name = "#{self.table_name_prefix}#{self.table_name}" unless self.abstract_class?
     end
     alias :database_name= :schema_name=
@@ -83,9 +83,5 @@ module ConnectionManager
     end
   end
 end
-if ActiveRecord::VERSION::MAJOR == 4
-  ActiveRecord::ConnectionHandling.send(:include, ConnectionManager::ConnectionHandling)
-else
-  require 'active_record/base'
-  ActiveRecord::Base.extend(ConnectionManager::ConnectionHandling)
-end
+ActiveRecord::ConnectionHandling.send(:include, ConnectionManager::ConnectionHandling)
+
