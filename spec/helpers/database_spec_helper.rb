@@ -64,7 +64,6 @@ class TestMigrations < ActiveRecord::Migration
         create_table "cm_test.fruits" do |t|
           t.string :name
           t.integer :region_id
-          t.timestamps
         end
       rescue => e
         puts "tables failed to create: #{e}"
@@ -72,7 +71,6 @@ class TestMigrations < ActiveRecord::Migration
       begin
         create_table "cm_test.baskets" do |t|
           t.string :name
-          t.timestamps
         end
       rescue => e
         puts "tables failed to create: #{e}"
@@ -81,7 +79,6 @@ class TestMigrations < ActiveRecord::Migration
         create_table "cm_test.fruit_baskets" do |t|
           t.integer :fruit_id
           t.integer :basket_id
-          t.timestamps
         end
       rescue => e
         puts "tables failed to create: #{e}"
@@ -90,7 +87,6 @@ class TestMigrations < ActiveRecord::Migration
         create_table "cm_test.regions" do |t|
           t.string :name
           t.integer :type_id
-          t.timestamps
         end
       rescue => e
         puts "tables failed to create: #{e}"
@@ -98,7 +94,6 @@ class TestMigrations < ActiveRecord::Migration
       begin
         create_table "cm_test.types" do |t|
           t.string :name
-          t.timestamps
         end
       rescue => e
         puts "tables failed to create: #{e}"
@@ -117,7 +112,6 @@ class TestMigrations < ActiveRecord::Migration
     begin
       create_table "cm_user_test.types" do |t|
         t.string :name
-        t.timestamps
       end
     rescue => e
       puts "tables failed to create: #{e}"

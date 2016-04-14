@@ -18,14 +18,14 @@ describe ConnectionManager::Builder do
       ConnectionManager::Builder.build_connection_class("MyConnectionClass", :test)
     end
     it "should add a class with supplied class name to ConnectionManager::Builder" do
-      expect(defined?(MyConnectionClass)).to be_true
+      expect(defined?(MyConnectionClass)).to eql("constant")
       expect(MyConnectionClass).to be_a(Class)
     end
     it "should have a super class of ActiveRecord::Base" do
      expect(MyConnectionClass.superclass).to eql(ActiveRecord::Base)
     end
     it "should be an abstract class" do
-      expect(MyConnectionClass.abstract_class?).to be_true
+      expect(MyConnectionClass.abstract_class?).to eql(true)
     end
   end   
 end

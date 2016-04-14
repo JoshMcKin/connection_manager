@@ -17,7 +17,7 @@ describe ConnectionManager::Shards do
       a = Fruit.shards do |shard|
         shard.where(:id => fruit.id).first
       end
-      expect(klasses.include?(a[0].class.name)).to be_true
+      expect(klasses.include?(a[0].class.name)).to eql(true)
     end
    
       
@@ -34,7 +34,7 @@ describe ConnectionManager::Shards do
       cfruit = Fruit.shards do |shard|
         shard.where('id = ?', fruit.id).first    
       end
-      expect((afruit == bfruit && bfruit == cfruit)).to be_true
+      expect((afruit == bfruit && bfruit == cfruit)).to eql(true)
     end
   end
 end

@@ -32,8 +32,19 @@ module ConnectionManager
     end
   end
 end
-if ActiveRecord::VERSION::MAJOR == 3 && ActiveRecord::VERSION::MINOR <= 1
+
+if ActiveRecord::VERSION::MAJOR == 3
   require 'active_record/connection_adapters/mysql2_adapter'
-  ActiveRecord::ConnectionAdapters::MysqlAdapter.send(:include,(ConnectionManager::MysqlAdapter)) if defined?(ActiveRecord::ConnectionAdapters::MysqlAdapter)
-  ActiveRecord::ConnectionAdapters::Mysql2Adapter.send(:include,(ConnectionManager::MysqlAdapter))
+  if ActiveRecord::VERSION::MINOR <= 1
+    ActiveRecord::ConnectionAdapters::MysqlAdapter.send(:include,(ConnectionManager::MysqlAdapter)) if defined?(ActiveRecord::ConnectionAdapters::MysqlAdapter)
+    ActiveRecord::ConnectionAdapters::Mysql2Adapter.send(:include,(ConnectionManager::MysqlAdapter))
+  end
+  require 'active_record/connection_adapters/abstract_mysql_adapter'
+  module ActiveRecord
+    module ConnectionAdapters
+      class AbstractMysqlAdapter < AbstractAdapter
+        NATIVE_DATABASE_TYPES[:primary_key] = "int(11) auto_increment PRIMARY KEY"
+      end
+    end
+  end
 end
