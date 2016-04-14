@@ -51,10 +51,11 @@ module ConnectionManager
     # connections we use sample to get a random connection instead of blocking
     # to rotate the pool on every fetch.
     def fetch_replication_connection(method_name)
-      unless @replication_connections && available_connections = @replication_connections[method_name]
+      if @replication_connections && available_connections = @replication_connections[method_name]
+        available_connections.sample
+      else
         raise ArgumentError, "Replication connections could not be found for #{method_name}."
       end
-      available_connections.sample
     end
 
     # Builds replication connection classes and methods

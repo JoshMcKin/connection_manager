@@ -1,5 +1,5 @@
 require "connection_manager/version"
-require 'thread_safe'
+require 'concurrent'
 require 'active_record'
 require 'active_support'
 require 'connection_manager/connection_adapters/abstract_adapter'
