@@ -14,7 +14,7 @@ module ConnectionManager
 
     # Is this class replicated
     def replicated?
-      (@replication_connections && (!replication_connections[:slaves].empty? || !replication_connections[:masters].empty?))
+      (@replication_connections && (!@replication_connections[:slaves].empty? || !@replication_connections[:masters].empty?))
     end
 
     # Builds a class method that returns an ActiveRecord::Relation for use with
@@ -30,7 +30,11 @@ module ConnectionManager
     # * :name - name of class method to call to access replication, default to slaves
     # * :type - the type of replication; :slaves or :masters, defaults to :slaves
     def replicated(*connections)
-      options = {:slaves => [], :masters => [], :type => :slaves}.merge(connections.extract_options!.symbolize_keys)
+      options = connections.extract_options!
+      options.symbolize_keys!
+      options[:slaves] ||= []
+      options[:masters] ||= []
+      options[:type] ||= :slaves
       options[options[:type]] = connections unless connections.empty?
       set_replications_connections(options)
     end

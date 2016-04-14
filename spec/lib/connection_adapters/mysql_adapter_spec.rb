@@ -4,10 +4,10 @@ require 'spec_helper'
 describe  ActiveRecord::Base do
   describe '#table_exists?' do
     it "should return true for unquoted full_names" do
-      expect(Fruit.connection.table_exists?('cm_test.fruits')).to be_true
+      expect(Fruit.connection.table_exists?('cm_test.fruits')).to eql(true)
     end
     it "should return true for table only names" do
-      expect(Fruit.connection.table_exists?('fruits')).to be_true
+      expect(Fruit.connection.table_exists?('fruits')).to eql(true)
     end
   end
 end

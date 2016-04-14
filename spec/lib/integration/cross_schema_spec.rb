@@ -9,14 +9,14 @@ describe ActiveRecord::Base do
 
   describe '#joins' do
     it "should work" do
-      @user.foos.blank?.should be_false
+      @user.foos.blank?.should eql(false)
       found = Foo.joins(:cm_user).select('cm_users.name AS user_name').where('cm_users.id = ?',@user.id).first
       expect(found.user_name).to_not be_blank
     end
   end
   describe '#includes' do
     before(:each) do
-      @user.foos.blank?.should be_false
+      @user.foos.blank?.should eql(false)
       search = Foo.includes(:cm_user).where('cm_users.id = ?',@user.id)
       search = search.references(:cm_user) if search.respond_to?(:references)
       @found = search.first

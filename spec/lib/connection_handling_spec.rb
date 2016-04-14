@@ -47,18 +47,18 @@ describe ConnectionManager::ConnectionHandling do
 
   describe '#establish_connection' do
     it "should register class as connection class" do
-      expect(ActiveRecord::Base.managed_connection_classes.include?("MyConnectionClass")).to be_true
+      expect(ActiveRecord::Base.managed_connection_classes.include?("MyConnectionClass")).to eql(true)
     end
   end
 
   describe '#establish_managed_connection' do
     context 'the connection class' do
       it "should create abstract class" do
-        expect(MyManagedConnectionClass.abstract_class).to be_true
+        expect(MyManagedConnectionClass.abstract_class).to eql(true)
       end
 
       it "should check in the connection" do
-        expect(ActiveRecord::Base.managed_connection_classes.include?("MyManagedConnectionClass")).to be_true
+        expect(ActiveRecord::Base.managed_connection_classes.include?("MyManagedConnectionClass")).to eql(true)
       end
     end
   end

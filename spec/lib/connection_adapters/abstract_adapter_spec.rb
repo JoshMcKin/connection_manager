@@ -11,15 +11,15 @@ describe ConnectionManager::AbstractAdapter do
   describe '#cross_schema_support?' do
     it "should be true for Mysql" do
       @con.stubs(:config).returns({:adapter => 'mysql'})
-      expect(@con.cross_schema_support?).to be_true
+      expect(@con).to be_cross_schema_support
     end
     it "should be true for Postgres" do
       @con.stubs(:config).returns({:adapter => 'postgresql'})
-      expect(@con.cross_schema_support?).to be_true
+      expect(@con).to be_cross_schema_support
     end
     it "should be true for SQL server" do
       @con.stubs(:config).returns({:adapter => 'sqlserver'})
-      expect(@con.cross_schema_support?).to be_true
+      expect(@con).to be_cross_schema_support
     end
   end
 

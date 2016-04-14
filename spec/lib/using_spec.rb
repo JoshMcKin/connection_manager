@@ -43,7 +43,7 @@ describe ConnectionManager::Using do
     context 'A shard like connection' do
       it "should use other connection" do
         fruit = FactoryGirl.create(:fruit)
-        expect(Fruit.using("OtherConnection").where(:name => fruit.name).exists?).to be_false
+        expect(Fruit.using("OtherConnection").where(:name => fruit.name).exists?).to eql(false)
       end
     end
 
