@@ -1,8 +1,7 @@
-require 'thread'
 require 'active_record/relation'
 module ConnectionManager
   module ConnectionHandling
-    @@managed_connections = ThreadSafe::Cache.new
+    @@managed_connections = Concurrent::Map.new
 
     # Attempts to return the schema from table_name and table_name_prefix
     def schema_name
