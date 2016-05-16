@@ -136,10 +136,9 @@ If there are multiple replication connections the system will pick a connection 
     User.slaves.where('id BETWEEN ? and ?',1,100]).all  => returns results from slave_2_user_data_development 
 
 ### Repliation with cross-schema queries
-Setup replication as you would normally
+Setup replication as you would normally. Then build connection classes that inherit from you base connection 
+classes for each of your schemas.
 
-Next build connection classes that inherit from you base connection classes for each of your schemas
-EX
     class UserSchema < ActiveRecord::Base
       self.abstract_class = true
       self.schema_name = 'user_schema'
@@ -168,7 +167,7 @@ EX
 
     User.joins(:bars).limit(1).to_sql # => SELECT * FROM `user_schema`.`users` INNER JOIN `foo.bars` ON `foo.bars`.`user_id` = `user_schema`.`users` LIMIT 1"
 
-## Sharding
+## Shards
 
 After tinkering with some solutions for shards, I've come to a similar conclusion as [DataFabric] (https://github.com/mperham/data_fabric):
 "Sharding should be implemented at the application level". The `shards` method is very basic and
