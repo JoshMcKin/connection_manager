@@ -27,13 +27,13 @@ module ConnectionManager
     # * :name - name of class method to call to access replication, default to slaves
     # * :type - the type of replication; :slaves or :masters, defaults to :slaves
     def replicated(*connections)
-      options = connections.extract_options!
-      options.symbolize_keys!
-      options[:slaves] ||= []
-      options[:masters] ||= []
-      options[:type] ||= :slaves
-      options[options[:type]] = connections unless connections.empty?
-      set_replications_connections(options)
+      opts = connections.extract_options!
+      opts.symbolize_keys!
+      opts[:slaves] ||= []
+      opts[:masters] ||= []
+      opts[:type] ||= :slaves
+      opts[opts[:type]] = connections unless connections.empty?
+      set_replications_connections(opts)
     end
 
     def fetch_slave_connection
@@ -51,10 +51,11 @@ module ConnectionManager
     # connections we use sample to get a random connection instead of blocking
     # to rotate the pool on every fetch.
     def fetch_replication_connection(method_name)
-      unless @replication_connections && available_connections = @replication_connections[method_name]
+      if @replication_connections && available_connections = @replication_connections[method_name]
+        available_connections.sample
+      else
         raise ArgumentError, "Replication connections could not be found for #{method_name}."
       end
-      available_connections.sample
     end
 
     # Builds replication connection classes and methods
@@ -69,15 +70,15 @@ module ConnectionManager
           end
         end
       end
-      raise ArgumentError, "Replication connections could not be found for #{self.name}." if !replicated? || (@replication_connections[:masters].nil? && @replication_connections[:slaves].nil?)
+      raise ArgumentError, "Connection class could not be found for #{self.name}." unless (replicated? && (@replication_connections[:masters] || @replication_connections[:slaves]))
       @replication_connections
     end
 
     def fetch_connection_class_name(to_use)
-      connection_class_name = to_use
-      connection_class_name = fetch_connection_class_name_from_yml_key(connection_class_name) if connection_class_name.to_s.match(/_/)
-      raise ArgumentError, "For #{self.name}, the class #{connection_class_name} could not be found." if connection_class_name.blank?
-      connection_class_name
+      conn_class_name = to_use
+      conn_class_name = fetch_connection_class_name_from_yml_key(conn_class_name) if conn_class_name.to_s =~ /_/
+      raise ArgumentError, "For #{self.name}, the class #{conn_class_name} could not be found." if conn_class_name.blank?
+      conn_class_name
     end
 
     def fetch_connection_class_name_from_yml_key(yml_key)

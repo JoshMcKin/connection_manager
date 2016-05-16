@@ -31,23 +31,27 @@ module ConnectionManager
 
       def env_regex
         return @env_regex if @env_regex
-        s = "#{ConnectionManager.env}$"
-        @env_regex = Regexp.new("(#{s})")
+        env_str = "#{ConnectionManager.env}$"
+        @env_regex = Regexp.new("(#{env_str})")
       end
 
       private
       # Creates a string to be used for the class name. Removes the current env.
       def clean_yml_key(name)
-        new_name = "#{name}".gsub(env_regex,'')
+        new_name = "#{name}"
+        new_name.gsub!(env_regex,'')
         new_name = "Base" if new_name.blank?
-        new_name.gsub(/\_$/,'')
+        new_name.gsub!(/\_$/,'')
+        new_name
       end
 
       # Given an connection key name from the database.yml, returns the string
       # equivalent of the class name for that entry.
       def connection_class_name(name_from_yml)
         new_class_name = clean_yml_key(name_from_yml)
-        new_class_name = new_class_name.gsub(/\_/,' ').titleize.gsub(/ /,'')
+        new_class_name.gsub!(/\_/,' ')
+        new_class_name.gsub!(/\b(?<!['â`])[a-z]/) { $&.capitalize! }
+        new_class_name.gsub!(/ /,'')
         new_class_name << "Connection"
         new_class_name
       end

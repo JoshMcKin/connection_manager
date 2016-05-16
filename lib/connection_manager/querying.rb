@@ -1,13 +1,9 @@
 require 'active_support/core_ext/module/delegation'
 module ConnectionManager
   module Querying
-    delegate :using, :to => (ActiveRecord::VERSION::MAJOR == 4 ? :all : :scoped)
-    delegate :slaves, :to => (ActiveRecord::VERSION::MAJOR == 4 ? :all : :scoped)
-    delegate :masters, :to => (ActiveRecord::VERSION::MAJOR == 4 ? :all : :scoped)
+    delegate :using, :to =>  :all
+    delegate :slaves, :to =>  :all
+    delegate :masters, :to => :all
   end
 end
-if ActiveRecord::VERSION::MAJOR == 4
-  ActiveRecord::Querying.send(:include, ConnectionManager::Querying)
-else
-  ActiveRecord::Base.send(:extend, ConnectionManager::Querying)
-end
+ActiveRecord::Querying.send(:include, ConnectionManager::Querying)

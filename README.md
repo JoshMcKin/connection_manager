@@ -1,4 +1,4 @@
-# ConnectionManager
+# ConnectionManager [![Build Status](https://travis-ci.org/JoshMcKin/connection_manager.svg)](https://travis-ci.org/JoshMcKin/connection_manager)
 Improved cross-schema, replication and mutli-DMS gem for ActiveRecord.
 
 ## Features
@@ -12,7 +12,7 @@ ConnectionManager is available through [Rubygems](https://rubygems.org/gems/conn
 
     $ gem install connection_manager
 
-## Rails 3/4 setup
+## Rails 4 setup
 
 Add connection_manager to you gemfile:
     
@@ -142,10 +142,10 @@ Next build connection classes that inherit from you base connection classes for 
 EX
     class UserSchema < ActiveRecord::Base
       self.abstract_class = true
-      self.table_name_prefix = 'user_schema.'
+      self.schema_name = 'user_schema'
 
       def self.inherited(base)
-        base.use_schema(self.schema_name)
+        base.schema_name = self.schema_name
       end
     end
 
@@ -155,10 +155,10 @@ EX
 
     class FooSchema < ActiveRecord::Base
       self.abstract_class = true
-      self.table_name_prefix = 'foo.'
+      self.schema_name = 'foo'
 
       def self.inherited(base)
-        base.use_schema(self.schema_name)
+        base.schema_name = self.schema_name
       end
     end
 
