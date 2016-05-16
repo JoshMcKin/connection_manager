@@ -1,4 +1,4 @@
-# ConnectionManager
+# ConnectionManager [![Build Status](https://travis-ci.org/JoshMcKin/connection_manager.svg)](https://travis-ci.org/JoshMcKin/connection_manager)
 Improved cross-schema, replication and mutli-DMS gem for ActiveRecord.
 
 ## Features
