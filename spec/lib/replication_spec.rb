@@ -12,7 +12,7 @@ describe ConnectionManager::Replication do
       ActiveRecord::Base.stubs(:replication_connections).returns({:masters => [], :slaves => []})
       ActiveRecord::ConnectionAdapters::AbstractAdapter.any_instance.stubs(:slave_keys).returns([])
       ActiveRecord::ConnectionAdapters::AbstractAdapter.any_instance.stubs(:master_keys).returns([])
-      expect(lambda { Fruit.replicated }).to raise_error
+      expect(lambda { Fruit.replicated }).to raise_error(ArgumentError)
     end
 
     it "should not raise an exception if no connections are empty, but connection.replication_keys are not blank" do

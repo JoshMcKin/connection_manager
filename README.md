@@ -142,10 +142,10 @@ Next build connection classes that inherit from you base connection classes for 
 EX
     class UserSchema < ActiveRecord::Base
       self.abstract_class = true
-      self.table_name_prefix = 'user_schema.'
+      self.schema_name = 'user_schema'
 
       def self.inherited(base)
-        base.use_schema(self.schema_name)
+        base.schema_name = self.schema_name
       end
     end
 
@@ -155,10 +155,10 @@ EX
 
     class FooSchema < ActiveRecord::Base
       self.abstract_class = true
-      self.table_name_prefix = 'foo.'
+      self.schema_name = 'foo'
 
       def self.inherited(base)
-        base.use_schema(self.schema_name)
+        base.schema_name = self.schema_name
       end
     end
 
