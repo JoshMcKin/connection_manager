@@ -10,3 +10,5 @@ services:
 script: bundle exec rspec spec
 gemfile:
   - gemfiles/4.2.gemfile
+  - gemfiles/4.1.gemfile
+  - gemfiles/4.0.gemfile
