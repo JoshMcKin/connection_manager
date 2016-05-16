@@ -1,0 +1,12 @@
+sudo: false
+cache: bundler
+language: ruby
+rvm:
+  - 2.3.1
+services:
+  - mysql
+  - postgresql
+
+script: bundle exec rspec spec
+gemfile:
+  - gemfiles/4.2.gemfile
